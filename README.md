@@ -1,6 +1,6 @@
-# HA Open-Meteo Solar Forecast Integration
+# HA SunForecast Plus Integration
 
-This custom component integrates the [open-meteo-solar-forecast](https://github.com/rany2/open-meteo-solar-forecast) with Home Assistant. It allows you to see what your solar panels may produce in the future.
+This custom component integrates the [sunforecast](https://github.com/chourmovs/ha-sunforecast-plus) with Home Assistant. It allows you to see what your solar panels may produce in the future.
 
 ## Installation
 
@@ -13,12 +13,12 @@ This custom component integrates the [open-meteo-solar-forecast](https://github.
 5. Add `rany2/ha-open-meteo-solar-forecast` as the repository URL.
 6. Click on `Category` and select `Integration`.
 7. Click on `Add`.
-8. A new custom integration shows up for installation "Open-Meteo Solar Forecast", install it.
+8. A new custom integration shows up for installation "SunForecast Plus", install it.
 9. Restart Home Assistant.
 
 ### Manual
 
-1. Download the [latest release](https://github.com/rany2/ha-open-meteo-solar-forecast/releases/latest).
+1. Download the [latest release](https://github.com/chourmovs/ha-sunforecast-plus/releases/latest).
 2. Unpack the release and copy the `custom_components/open_meteo_solar_forecast` directory to the `custom_components` directory in your Home Assistant configuration directory.
 3. Restart Home Assistant.
 
@@ -71,4 +71,6 @@ Notice that the power sensor picks the last known value until the next update, n
 
 ## Credits
 
+This project was initially a fork of [rany2/ha-open-meteo-solar-forecast](https://github.com/rany2/ha-open-meteo-solar-forecast) for personal use, when I realised that improvement proposed was a nice step forward and needed their own life
 The [forecast_solar component code](https://github.com/home-assistant/core/tree/dev/homeassistant/components/forecast_solar) was used as a base for this integration. Thanks for such a clean starting point!
+
