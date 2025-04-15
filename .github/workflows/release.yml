@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v2
 
       # Pack the open_meteo_solar_forecast dir as a zip and upload to the release
-      - name: ZIP open_meteo_solar_forecast Dir
+      - name: ZIP sunforecast_plus Dir
         run: |
           cd ${{ github.workspace }}/custom_components/sunforecast_plus
           zip sunforecast_plus.zip -r ./
