@@ -1,4 +1,4 @@
-"""Config flow for Open-Meteo Solar Forecast integration."""
+"""Config flow for The Sunforecast Plus integration."""
 
 from __future__ import annotations
 

@@ -10,7 +10,7 @@ This custom component integrates the [sunforecast](https://github.com/chourmovs/
 2. Click on `Integrations`.
 3. Click on the three dots in the top right corner.
 4. Click on `Custom repositories`.
-5. Add `rany2/ha-open-meteo-solar-forecast` as the repository URL.
+5. Add `chourmovs/ha-sunforecast-plus` as the repository URL.
 6. Click on `Category` and select `Integration`.
 7. Click on `Add`.
 8. A new custom integration shows up for installation "SunForecast Plus", install it.
@@ -19,7 +19,7 @@ This custom component integrates the [sunforecast](https://github.com/chourmovs/
 ### Manual
 
 1. Download the [latest release](https://github.com/chourmovs/ha-sunforecast-plus/releases/latest).
-2. Unpack the release and copy the `custom_components/open_meteo_solar_forecast` directory to the `custom_components` directory in your Home Assistant configuration directory.
+2. Unpack the release and copy the `custom_components/sunforecast_plus` directory to the `custom_components` directory in your Home Assistant configuration directory.
 3. Restart Home Assistant.
 
 ## Configuration

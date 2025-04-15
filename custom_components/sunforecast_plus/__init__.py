@@ -1,4 +1,4 @@
-"""The Open-Meteo Solar Forecast integration."""
+"""The Sunforecast Plus integration."""
 
 from __future__ import annotations
 

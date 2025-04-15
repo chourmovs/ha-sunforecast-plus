@@ -1,12 +1,12 @@
 {
-  "domain": "open_meteo_solar_forecast",
-  "name": "Open-Meteo Solar Forecast",
-  "codeowners": ["@rany2"],
+  "domain": "sunforecast_plus",
+  "name": "SunForecast Plus",
+  "codeowners": ["@chourmovs"],
   "config_flow": true,
-  "documentation": "https://github.com/rany2/ha-open-meteo-solar-forecast",
+  "documentation": "https://github.com/chourmovs/ha-sunforecast-plus",
   "integration_type": "service",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/rany2/ha-open-meteo-solar-forecast/issues",
-  "requirements": ["open_meteo_solar_forecast==0.1.20"],
-  "version": "0.1.20"
+  "issue_tracker": "ha-sunforecast-plus/issues",
+  "requirements": ["ha-sunforecast-plus==0.30"],
+  "version": "0.30"
 }

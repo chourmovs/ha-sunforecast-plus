@@ -1,4 +1,4 @@
-"""Support for the Open-Meteo Solar Forecast sensor service."""
+"""Support for Sun Forecast Plus sensor service."""
 
 from __future__ import annotations
 

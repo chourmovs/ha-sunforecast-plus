@@ -1,4 +1,4 @@
-"""DataUpdateCoordinator for the Open-Meteo Solar Forecast integration."""
+"""DataUpdateCoordinator for the Sunforecast Plus integration."""
 from __future__ import annotations
 from datetime import timedelta, datetime, timezone
 from homeassistant.config_entries import ConfigEntry

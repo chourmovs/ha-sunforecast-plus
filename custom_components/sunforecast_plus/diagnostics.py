@@ -1,4 +1,4 @@
-"""Diagnostics support for Open-Meteo Solar Forecast integration."""
+"""Diagnostics support for The Sunforecast Plus integration."""
 
 from __future__ import annotations
 
