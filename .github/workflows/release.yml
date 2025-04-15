@@ -18,6 +18,7 @@ jobs:
         run: |
           cd ${{ github.workspace }}/custom_components/sunforecast_plus
           zip sunforecast_plus.zip -r ./
+          ls
       - name: Upload zip to release
         uses: svenstaro/upload-release-action@v1-release
         with:
