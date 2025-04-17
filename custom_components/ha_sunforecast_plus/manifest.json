@@ -1,5 +1,5 @@
 {
-  "domain": "sunforecast_plus",
+  "domain": "ha_sunforecast_plus",
   "name": "SunForecast Plus",
   "codeowners": ["@chourmovs"],
   "config_flow": true,
