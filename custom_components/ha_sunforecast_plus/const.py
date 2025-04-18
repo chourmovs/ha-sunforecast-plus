@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-DOMAIN = "sunforecast_plus"
+DOMAIN = "ha_sunforecast_plus"
 LOGGER = logging.getLogger(__package__)
 
 CONF_BASE_URL = "base_url"
