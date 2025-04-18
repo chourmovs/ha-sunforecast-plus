@@ -24,7 +24,7 @@ This custom component integrates the [sunforecast](https://github.com/chourmovs/
 
 ## Configuration
 
-To use this integration in your installation, head to "Settings" in the Home Assistant UI, then "Integrations". Click on the plus button and search for "Open-Meteo Solar Forecast" and follow the instructions.
+To use this integration in your installation, head to "Settings" in the Home Assistant UI, then "Integrations". Click on the plus button and search for "Sun Forecast Plus" and follow the instructions.
 
 ## Common Mistakes
 
@@ -44,9 +44,6 @@ The DC efficiency is the efficiency of the DC wiring and should not be confused 
 
 The power sensors start with "Solar production forecast Estimated power" and the energy sensors start with "Solar production forecast Estimated energy". The power sensors show the power expected to be available at that time, and the energy sensors show the energy expected to be produced as an average over an hour.
 
-### Confusion between "Open-Meteo" and "Open-Meteo Solar Forecast" Integrations
-
-The "Open-Meteo" integration is for weather data, and the "Open-Meteo Solar Forecast" integration is for solar production data. They are separate integrations and should not be confused with each other.
 
 ### Disabled Sensors
 
