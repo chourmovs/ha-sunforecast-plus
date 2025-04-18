@@ -109,7 +109,7 @@ class OpenMeteoSolarForecastFlowHandler(ConfigFlow, domain=DOMAIN):
                     ),
                     vol.Optional(CONF_MODEL, default="best_match"): str,
                     vol.Optional(CONF_CLOUD_MODEL, default="best_match"): str,
-                    vol.Optional(CONF_CLOUD_CORRECTION_FACTOR, default=self.config_entry.options.get(CONF_CLOUD_CORRECTION_FACTOR, DEFAULT_CLOUD_CORRECTION_FACTOR)
+                    vol.Optional(CONF_CLOUD_CORRECTION_FACTOR, default=0.5
 ): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
                 }
             ),

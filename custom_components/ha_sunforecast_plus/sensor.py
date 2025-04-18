@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, self
+from typing import Any
 
 from homeassistant.components.sensor import (
     DOMAIN as SENSOR_DOMAIN,
@@ -50,15 +50,6 @@ SENSORS: tuple[OpenMeteoSolarForecastSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         suggested_display_precision=1,
-    ),
-    OpenMeteoSolarForecastSensorEntityDescription(
-    key="energy_production_today_adjusted",
-    translation_key="energy_production_today_adjusted",
-    state=lambda estimate: estimate.energy_production_today * (1 - (self.coordinator.adjustment_stats.get('adjustment_percentage', 0) / 100)),
-    device_class=SensorDeviceClass.ENERGY,
-    native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-    suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-    suggested_display_precision=1,
     ),
     OpenMeteoSolarForecastSensorEntityDescription(
         key="energy_production_today_remaining",
