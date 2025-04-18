@@ -68,6 +68,7 @@ Notice that the power sensor picks the last known value until the next update, n
 
 ## Credits
 
-This project was initially a fork of [rany2/ha-open-meteo-solar-forecast](https://github.com/rany2/ha-open-meteo-solar-forecast) for personal use, when I realised that improvement proposed was a nice step forward and needed their own life
+This project was initially a fork of [rany2/ha-open-meteo-solar-forecast](https://github.com/rany2/ha-open-meteo-solar-forecast) for personal use, when I realised that improvement proposed was a nice step forward and needed their own life.
+
 The [forecast_solar component code](https://github.com/home-assistant/core/tree/dev/homeassistant/components/forecast_solar) was used as a base for this integration. Thanks for such a clean starting point!
 
