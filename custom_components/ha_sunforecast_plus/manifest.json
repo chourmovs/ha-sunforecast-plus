@@ -7,5 +7,6 @@
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/chourmovs/ha-sunforecast-plus/issues",
+  "requirements": ["open_meteo_solar_forecast>=0.1.21"],
   "version": "0.34"
 }
