@@ -256,7 +256,7 @@ class OpenMeteoSolarForecastDataUpdateCoordinator(DataUpdateCoordinator[Estimate
                 if 0 <= hour_index < len(cloud_cover_data):
                     cloud_cover_percent = cloud_cover_data[hour_index]
             
-            adjustment_factor = 1.0 - (cloud_cover_percent / 100.0 * 0.7)
+            adjustment_factor = 1.0 - (cloud_cover_percent / 100.0 * cloud_correction_factor)
             estimate.wh_period[timestamp] = wh * adjustment_factor
             
             # Ajouter au compteur de totaux pour les statistiques
