@@ -22,26 +22,15 @@ from .exceptions import (
     OpenMeteoSolarForecastRequestError,
 )
 from .models import Estimate
+from homeassistant.config_entries import ConfigEntry
 
 from ..const import (
-    CONF_AZIMUTH,
-    CONF_BASE_URL,
-    CONF_DAMPING_EVENING,
-    CONF_DAMPING_MORNING,
-    CONF_DECLINATION,
-    CONF_EFFICIENCY_FACTOR,
-    CONF_INVERTER_POWER,
-    CONF_MODULES_POWER,
-    CONF_MODEL,
-    CONF_CLOUD_MODEL,
+
     CONF_CLOUD_CORRECTION_FACTOR,
     DEFAULT_CLOUD_CORRECTION_FACTOR,
-    DOMAIN,
     LOGGER,
 )
 
-import logging
-LOGGER = logging.getLogger(__package__)
 
 @dataclass
 class OpenMeteoSolarForecast:
@@ -63,6 +52,7 @@ class OpenMeteoSolarForecast:
     damping_morning: float | list[float] = 0.0
     damping_evening: float | list[float] = 0.0
     efficiency_factor: float | list[float] = 1.0
+    config_entry: ConfigEntry
 
     session: ClientSession | None = None
     _close_session: bool = False

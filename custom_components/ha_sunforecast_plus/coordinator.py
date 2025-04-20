@@ -18,9 +18,6 @@ from .const import (
     CONF_INVERTER_POWER,
     CONF_MODULES_POWER,
     CONF_MODEL,
-    CONF_CLOUD_MODEL,
-    CONF_CLOUD_CORRECTION_FACTOR,
-    DEFAULT_CLOUD_CORRECTION_FACTOR,
     DOMAIN,
     LOGGER,
 )
@@ -71,6 +68,7 @@ class OpenMeteoSolarForecastDataUpdateCoordinator(DataUpdateCoordinator[Estimate
             damping_morning=entry.options.get(CONF_DAMPING_MORNING, 0.0),
             damping_evening=entry.options.get(CONF_DAMPING_EVENING, 0.0),
             weather_model=entry.options.get(CONF_MODEL, "best_match"),
+            config_entry=entry,
         )
 
         # Initialiser les attributs pour le débogage
