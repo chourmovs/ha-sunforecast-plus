@@ -22,6 +22,8 @@ from .exceptions import (
 )
 from .models import Estimate
 
+import logging
+LOGGER = logging.getLogger(__package__)
 
 @dataclass
 class OpenMeteoSolarForecast:
