@@ -6,7 +6,7 @@ from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from open_meteo_solar_forecast import Estimate, OpenMeteoSolarForecast
+from libs.open_meteo_solar_forecast import Estimate, OpenMeteoSolarForecast
 
 from .const import (
     CONF_AZIMUTH,
