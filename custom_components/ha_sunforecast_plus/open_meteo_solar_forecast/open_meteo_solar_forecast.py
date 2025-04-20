@@ -23,7 +23,7 @@ from .exceptions import (
 )
 from .models import Estimate
 
-from .const import (
+from ..const import (
     CONF_AZIMUTH,
     CONF_BASE_URL,
     CONF_DAMPING_EVENING,
