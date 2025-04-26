@@ -24,7 +24,7 @@ from .exceptions import (
 from .models import Estimate
 from homeassistant.config_entries import ConfigEntry
 
-from ..const import (
+from .const import (
 
     CONF_CLOUD_CORRECTION_FACTOR,
     DEFAULT_CLOUD_CORRECTION_FACTOR,
@@ -41,6 +41,8 @@ class OpenMeteoSolarForecast:
     dc_kwp: float | list[float]
     latitude: float | list[float]
     longitude: float | list[float]
+    config_entry: ConfigEntry
+
 
     past_days: int = 92
     forecast_days: int = 16
@@ -52,8 +54,7 @@ class OpenMeteoSolarForecast:
     damping_morning: float | list[float] = 0.0
     damping_evening: float | list[float] = 0.0
     efficiency_factor: float | list[float] = 1.0
-    config_entry: ConfigEntry
-
+    
     session: ClientSession | None = None
     _close_session: bool = False
 
