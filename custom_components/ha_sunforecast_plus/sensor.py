@@ -25,7 +25,7 @@ from homeassistant.helpers.event import async_track_utc_time_change
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from open_meteo_solar_forecast.models import Estimate
+from .estimate import Estimate
 
 from .const import ATTR_WATTS, ATTR_WH_PERIOD, DOMAIN
 from .coordinator import OpenMeteoSolarForecastDataUpdateCoordinator
