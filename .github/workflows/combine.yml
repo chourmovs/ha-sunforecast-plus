@@ -4,7 +4,7 @@ name: Combine Files
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main,beta1 ]
   workflow_dispatch:  # permet de le lancer manuellement aussi
 
 jobs:
