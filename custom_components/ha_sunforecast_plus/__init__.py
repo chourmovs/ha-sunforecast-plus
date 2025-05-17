@@ -7,10 +7,10 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
-from .exceptions import OpenMeteoSolarForecastUpdateFailed  # noqa: F401
+#from .exceptions import OpenMeteoSolarForecastUpdateFailed  # noqa: F401
 from .coordinator import OpenMeteoSolarForecastDataUpdateCoordinator
 #from .models import Estimate
-from .open_meteo_solar_forecast import OpenMeteoSolarForecast
+#from .open_meteo_solar_forecast import OpenMeteoSolarForecast
 
 __all__ = [
     "Estimate",
