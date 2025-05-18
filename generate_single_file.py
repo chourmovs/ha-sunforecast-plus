@@ -1,7 +1,7 @@
 import os
 
 OUTPUT_FILE = "combined_output.txt"
-IGNORED_DIRS = {".git", ".github", "__pycache__", "venv", "node_modules"}
+IGNORED_DIRS = {".git", ".github", "__pycache__", "venv", "node_modules", "translations"}
 IGNORED_CONTENT_EXTENSIONS = {".md"}  # <--- Exclure ces fichiers du contenu détaillé
 IGNORED_BINARY_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".exe", ".zip", ".tar", ".gz", ".7z"}
 
