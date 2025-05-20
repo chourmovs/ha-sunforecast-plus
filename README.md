@@ -26,6 +26,8 @@ This custom component integrates the [sunforecast](https://github.com/chourmovs/
 
 To use this integration in your installation, head to "Settings" in the Home Assistant UI, then "Integrations". Click on the plus button and search for "Sun Forecast Plus" and follow the instructions.
 
+![Capture1](https://i.imgur.com/1PmFjbG.png)
+![Capture2](https://i.imgur.com/l6ZtTup.png)
 ## Common Mistakes
 
 ### API Key
