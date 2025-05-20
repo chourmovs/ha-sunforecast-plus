@@ -42,12 +42,13 @@ You can test the differtents available models for your location at this URL : (h
 
 To use this integration in your installation, head to "Settings" in the Home Assistant UI, then "Integrations". Click on the plus button and search for "Sun Forecast Plus" and follow the instructions.
 
-Configuration part 1
+Configuration part 1:
+
 ![Capture1](https://i.imgur.com/1PmFjbG.png)
 
-Configuration part 2
-![Capture2](https://i.imgur.com/l6ZtTup.png)
+Configuration part 2:
 
+![Capture2](https://i.imgur.com/l6ZtTup.png)
 
 
 
