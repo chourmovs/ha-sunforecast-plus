@@ -328,7 +328,8 @@ class OpenMeteoSolarForecast:
                 # Logging final uniquement si on a bien une valeur
                 if cloud_cover_percent is not None:
                     if closest_timestamp:
-                        LOGGER.debug("Closest cloud timestamp for %s is %s with cloud cover %.2f%%", timestamp, closest_timestamp, cloud_cover_percent)
+                        if cloud_cover_percent > 0:
+                            LOGGER.debug("Closest cloud timestamp for %s is %s with cloud cover %.2f%%", timestamp, closest_timestamp, cloud_cover_percent)
                     else:
                         LOGGER.debug("Fallback cloud cover for %s is %.2f%%", timestamp, cloud_cover_percent)
                 else:
@@ -434,10 +435,11 @@ class OpenMeteoSolarForecast:
             estimate.wh_days[day] = wh * adjustment_factor
             
             # Enregistrer pour le débogage ( A garder)
-            LOGGER.debug(
-                "Day adjustment - %s: avg cloud cover: %.1f%%, original: %.1f, adjusted: %.1f", 
-                date_str, avg_cloud_cover, wh, (wh * adjustment_factor)
-            )
+            if avg_cloud_cover > 0:
+                LOGGER.debug(
+                    "Day adjustment - %s: avg cloud cover: %.1f%%, original: %.1f, adjusted: %.1f", 
+                    date_str, avg_cloud_cover, wh, (wh * adjustment_factor)
+                )
         
         # Calculer les statistiques d'ajustement
         total_energy_after = sum(estimate.wh_period.values())
