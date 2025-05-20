@@ -50,6 +50,17 @@ Configuration part 2:
 ![Capture2](https://i.imgur.com/l6ZtTup.png)
 
 
+**Tip**
+To see the cloud-cover correction in action, activate the specific log in your configurationb.yaml
+```
+logger:
+  default: info
+  logs:
+    custom_components.ha_sunforecast_plus: debug
+    custom_components.ha_sunforecast_plus.data_update_coordinator: debug
+```
+![Capture3](https://i.imgur.com/aJ0IIPw.png)
+
 
 ## Common Mistakes
 
