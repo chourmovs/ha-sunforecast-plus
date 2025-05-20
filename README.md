@@ -1,22 +1,19 @@
 # HA SunForecast Plus Integration
 
-This custom component integrates the [Sun Forecast Plus](https://github.com/chourmovs/ha-sunforecast-plus) with Home Assistant.
+SunForecast Plus is a custom Home Assistant integration designed to provide more accurate solar production forecasts using weather data from [Open-Meteo](https://open-meteo.com/).
 
-This piece of python will allow you to see what your solar panels may produce in the future.
+Unlike other forecast integrations, **SunForecast Plus introduces a second-level correction based on cloud cover** percentage. Even small clouds can drastically reduce your solar production, so this integration applies a correction factor to account for cloud impact.
 
-Compared to other prediction integration, Sunforecast Plus is introducing a second level of correction in the calculation by the "cloud coverage" (in percent) given by open-meteo.
+The integration uses the `cloud_cover_total` metric from Open-Meteo to adjust the expected solar output.
 
-As you all know, cloud covering is really dramatical when you're considering solar electricity prodduction, even a little cloud can put your production to zero for some time, my approach was to statistically consider a contribution of average cloud cover on Watt production.
+As shown below, different weather models (like Meteo-France or GFS) interpret 100% cloud cover differently:
 
-The cloud coverage evaluation is done using "Cloud cover Total" metrics for your location proposed by open-meteo API.
+![Cloud Cover Models](https://i.imgur.com/2ZTGl62.png)
 
-As you can see in the following chart, this cloud_çcover data is very strangely supported by severals model (especially by meteo-france that consider 100% very quickly)
+**Tip:** Use the "lowest bidder" (e.g. `gfs_graphcast025`) and adjust the correction intensity with the `cloud_correction_factor`. A value of `0` disables cloud correction, while `1` applies full correction based on cloud cover.
 
-![Capture2](https://i.imgur.com/2ZTGl62.png)
+You can test available models for your location [here](https://open-meteo.com/en/docs?hourly=temperature_2m,cloud_cover).
 
-My advise is to use the "lowest bidder"  - in my case gfs_graphcast025 model and play with correction factor to adjust the intensity of correction (0 meaning 0% of cloud cover correction and 1 meaning 100% of cloud cover correction)
-
-You can test the differtents available models for your location at this URL : (https://open-meteo.com/en/docs?hourly=temperature_2m,cloud_cover)
 
 ## Installation
 
