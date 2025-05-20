@@ -263,7 +263,6 @@ class OpenMeteoSolarForecast:
         if cloud_timestamps:
             for i, timestamp_str in enumerate(cloud_timestamps):
                 if i < len(cloud_cover_data):
-                    # Convertir le format "2024-04-06T12:00" en datetime
                     try:
                         # Supprimer le 'T' et ajouter les secondes si nécessaire
                         dt_str = timestamp_str.replace('T', ' ')
@@ -271,14 +270,16 @@ class OpenMeteoSolarForecast:
                             dt_str += ':00'  # Ajouter les secondes si non présentes
                         cloud_dt = datetime.fromisoformat(dt_str)
                         cloud_cover_dict[cloud_dt] = cloud_cover_data[i]
-                        # LOGGER.debug("Cloud timestamp mapping: %s -> %s%%", dt_str, cloud_cover_data[i])
                     except ValueError as e:
                         LOGGER.error("Error parsing timestamp %s: %s", timestamp_str, e)
-        
+
         # Créer un journal de débogage pour les ajustements
         adjustment_log = {}
 
-        LOGGER.debug("Cloud timestamp %s -> %s%% cloud cover", timestamp_str, cloud_cover_data[i])
+        # Journaliser tout le dictionnaire une fois construit
+        for dt, cloud_cover in cloud_cover_dict.items():
+            LOGGER.debug("Cloud timestamp %s -> %s%% cloud cover", dt.isoformat(), cloud_cover)
+
 
         
         # Ajuster les watts (puissance instantanée)
