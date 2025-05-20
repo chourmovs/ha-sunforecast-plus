@@ -1,6 +1,19 @@
 # HA SunForecast Plus Integration
 
-This custom component integrates the [sunforecast](https://github.com/chourmovs/ha-sunforecast-plus) with Home Assistant. It allows you to see what your solar panels may produce in the future.
+This custom component integrates the [sunforecast](https://github.com/chourmovs/ha-sunforecast-plus) with Home Assistant.
+
+It will allow you to see what your solar panels may produce in the future.
+Compared to other prediction integration, Sunforecast Plus is introducing a second level of correction in the prediction by the "cloud coverage" in percent given by open-meteo.
+As you all know is really dramatical when you're considering solar electricity prodduction, even a little cloud can put your production to zero for some time, my approach was to statistically consider a contribution of average cloud cover on watt production
+The cloud coverage evaluation is done using Cloud cover Total metrics for your location proposed by open-meteo API
+
+As you can see in the following chart, this cloud_çcover data is very strangely supported by severals model (especially by meteo-france that consider 100% very quickly)
+
+![Capture2](https://i.imgur.com/2ZTGl62.png)
+
+My advise is to use the "lowest bidder"  - in my case gfs_graphcast025 model and play with correction factor to adjust the intensity of correction (0 meaning 0% of cloud cover correction and 1 meaning 100% of cloud cover correction)
+
+You can test the differtents available models for your location at this URL : (https://open-meteo.com/en/docs?hourly=temperature_2m,cloud_cover)
 
 ## Installation
 
@@ -26,8 +39,15 @@ This custom component integrates the [sunforecast](https://github.com/chourmovs/
 
 To use this integration in your installation, head to "Settings" in the Home Assistant UI, then "Integrations". Click on the plus button and search for "Sun Forecast Plus" and follow the instructions.
 
+Configuration part 1
 ![Capture1](https://i.imgur.com/1PmFjbG.png)
+
+Configuration part 2
 ![Capture2](https://i.imgur.com/l6ZtTup.png)
+
+
+
+
 ## Common Mistakes
 
 ### API Key
@@ -67,6 +87,8 @@ If you check the "Power Now" sensor at:
 - `12:37`, it will show `300` W (data taken from `12:30`)
 
 Notice that the power sensor picks the last known value until the next update, not necessarily the closest value. Also, the power sensors are not interpolated, so the "Power Now" sensor will not show ~`150` W at `12:07`.
+
+
 
 ## Credits
 
