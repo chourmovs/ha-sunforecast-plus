@@ -3,9 +3,12 @@
 This custom component integrates the [sunforecast](https://github.com/chourmovs/ha-sunforecast-plus) with Home Assistant.
 
 It will allow you to see what your solar panels may produce in the future.
+
 Compared to other prediction integration, Sunforecast Plus is introducing a second level of correction in the prediction by the "cloud coverage" in percent given by open-meteo.
-As you all know is really dramatical when you're considering solar electricity prodduction, even a little cloud can put your production to zero for some time, my approach was to statistically consider a contribution of average cloud cover on watt production
-The cloud coverage evaluation is done using Cloud cover Total metrics for your location proposed by open-meteo API
+
+As you all know is really dramatical when you're considering solar electricity prodduction, even a little cloud can put your production to zero for some time, my approach was to statistically consider a contribution of average cloud cover on Watt production.
+
+The cloud coverage evaluation is done using Cloud cover Total metrics for your location proposed by open-meteo API.
 
 As you can see in the following chart, this cloud_çcover data is very strangely supported by severals model (especially by meteo-france that consider 100% very quickly)
 
