@@ -707,7 +707,8 @@ class OpenMeteoSolarForecast:
         )
         
         cloud_cover_data = await self._fetch_hourly_cloud_cover()
-        self._adjust_estimate_with_cloud_cover(estimate, cloud_cover_data)
+        await self._adjust_estimate_with_cloud_cover(estimate, cloud_cover_data)
+
         
         return estimate
 
