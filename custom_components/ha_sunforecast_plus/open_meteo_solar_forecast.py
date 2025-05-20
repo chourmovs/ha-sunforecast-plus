@@ -330,8 +330,8 @@ class OpenMeteoSolarForecast:
                     if closest_timestamp:
                         if cloud_cover_percent > 0:
                             LOGGER.debug("Closest cloud timestamp for %s is %s with cloud cover %.2f%%", timestamp, closest_timestamp, cloud_cover_percent)
-                    else:
-                        LOGGER.debug("Fallback cloud cover for %s is %.2f%%", timestamp, cloud_cover_percent)
+                    #else:
+                        #LOGGER.debug("Fallback cloud cover for %s is %.2f%%", timestamp, cloud_cover_percent)
                 else:
                     LOGGER.warning("No cloud cover data available for timestamp: %s", timestamp)
 
@@ -339,12 +339,12 @@ class OpenMeteoSolarForecast:
             correction_factor = 1.0 - (cloud_cover_percent / 100.0) * self.config_entry.options.get(
                 CONF_CLOUD_CORRECTION_FACTOR, DEFAULT_CLOUD_CORRECTION_FACTOR
             )
-            LOGGER.debug(
-                "Applying correction factor %.4f to watts %.2f → %.2f",
-                correction_factor,
-                watts,
-                watts * correction_factor
-            )
+            # LOGGER.debug(
+            #     "Applying correction factor %.4f to watts %.2f → %.2f",
+            #     correction_factor,
+            #     watts,
+            #     watts * correction_factor
+            # )
 
             # Facteur d'ajustement: 100% de nébulosité = réduction de 70% (ajustable selon vos besoins)
 
@@ -456,11 +456,12 @@ class OpenMeteoSolarForecast:
 
         reduction = total_energy_before - total_energy_after
         percent_reduction = 100 * reduction / total_energy_before if total_energy_before else 0
-        LOGGER.info(
-            "Cloud correction applied: total energy before=%.2f kWh, after=%.2f kWh, reduction=%.2f%%",
-            total_energy_before,
-            total_energy_after,
-            percent_reduction,
+        if percent_reduction > 0:
+            LOGGER.info(
+                "Cloud correction applied: total energy before=%.2f kWh, after=%.2f kWh, reduction=%.2f%%",
+                total_energy_before,
+                total_energy_after,
+                percent_reduction,
 )
 
 
