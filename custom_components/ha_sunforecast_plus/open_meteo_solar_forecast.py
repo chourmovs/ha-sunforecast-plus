@@ -307,13 +307,11 @@ class OpenMeteoSolarForecast:
                         min_difference = difference
                         closest_timestamp = cloud_dt
                 
-                # Si on a trouvé un timestamp proche (moins de 2 heures de différence)
+              # Si on a trouvé un timestamp proche (moins de 2 heures de différence)
                 if closest_timestamp and min_difference <= timedelta(hours=2):
                     cloud_cover_percent = cloud_cover_dict[closest_timestamp]
-                    # LOGGER.debug(
-                    #     "Matched timestamp %s with cloud data timestamp %s (diff: %s), cloud cover: %s%%",
-                    #     timestamp, closest_timestamp, min_difference, cloud_cover_percent
-                    # )
+                    # LOGGER.debug(...)
+
                 else:
                     # Fallback à l'ancienne méthode basée sur l'heure du jour
                     day_offset = (timestamp.date() - estimate.now().date()).days
@@ -321,23 +319,16 @@ class OpenMeteoSolarForecast:
                     
                     if 0 <= hour_index < len(cloud_cover_data):
                         cloud_cover_percent = cloud_cover_data[hour_index]
-                        # LOGGER.debug(
-                        #     "Using fallback hour index method for %s: day_offset=%s, hour=%s, index=%s, cloud cover: %s%%", 
-                        #     timestamp, day_offset, timestamp.hour, hour_index, cloud_cover_percent
-                        # )
-            else:
-                # Fallback à l'ancienne méthode basée sur l'heure du jour comme dernier recours
-                day_offset = (timestamp.date() - estimate.now().date()).days
-                hour_index = timestamp.hour + (day_offset * 24)
-                
-                if 0 <= hour_index < len(cloud_cover_data):
-                    cloud_cover_percent = cloud_cover_data[hour_index]
-            
+                        # LOGGER.debug(...)
 
-            if closest_timestamp:
-                LOGGER.debug("Closest cloud timestamp for %s is %s with cloud cover %.2f%%", timestamp, closest_timestamp, cloud_cover_percent)
-            else:
-                LOGGER.warning("No close cloud cover data found for timestamp: %s", timestamp)
+                # Logging final uniquement si on a bien une valeur
+                if cloud_cover_percent is not None:
+                    if closest_timestamp:
+                        LOGGER.debug("Closest cloud timestamp for %s is %s with cloud cover %.2f%%", timestamp, closest_timestamp, cloud_cover_percent)
+                    else:
+                        LOGGER.debug("Fallback cloud cover for %s is %.2f%%", timestamp, cloud_cover_percent)
+                else:
+                    LOGGER.warning("No cloud cover data available for timestamp: %s", timestamp)
 
 
             correction_factor = 1.0 - (cloud_cover_percent / 100.0) * self.config_entry.options.get(
