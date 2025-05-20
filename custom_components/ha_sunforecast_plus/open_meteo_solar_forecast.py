@@ -231,7 +231,9 @@ class OpenMeteoSolarForecast:
         # Récupérer la liste des timestamps des données de nébulosité depuis l'API
         cloud_timestamps = []
         try:
-            url = f"https://api.open-meteo.com/v1/forecast?latitude={str(self.latitude[0])}&longitude={str(self.longitude[0])}&hourly=time&timeformat=iso8601&timezone=auto&models={self.weather_model}&forecast_days=7"
+            hourly_params = "cloudcover"  # ou autre variable valide demandée
+            url = f"https://api.open-meteo.com/v1/forecast?latitude={self.latitude[0]}&longitude={self.longitude[0]}&hourly={hourly_params}&timeformat=iso8601&timezone=auto&models={self.weather_model}&forecast_days=7"
+            
             async with self.session.get(url) as response:
                 if response.status != 200:
                     response_text = await response.text()
@@ -240,8 +242,10 @@ class OpenMeteoSolarForecast:
                 
                 data = await response.json()
                 cloud_timestamps = data.get("hourly", {}).get("time", [])
+                cloud_cover_data = data.get("hourly", {}).get("cloudcover", [])
         except Exception as e:
             LOGGER.error("Error fetching cloud timestamps: %s", e)
+
          # Sauvegarder les valeurs originales avant ajustement pour comparaison
         self.original_values = {
             "watts": {str(k): v for k, v in estimate.watts.items()},
