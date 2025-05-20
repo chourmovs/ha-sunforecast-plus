@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from datetime import timedelta, datetime, timezone
 from collections import defaultdict
 from dataclasses import dataclass
@@ -30,6 +32,7 @@ from .const import (
     DEFAULT_CLOUD_CORRECTION_FACTOR,
     LOGGER,
 )
+
 
 
 @dataclass
@@ -217,6 +220,9 @@ class OpenMeteoSolarForecast:
             
     async def _adjust_estimate_with_cloud_cover(self, estimate: Estimate, cloud_cover_data: list) -> None:
         """Ajuster l'estimation solaire en fonction des données de nébulosité."""
+
+        LOGGER.debug("Starting adjustment of solar estimate using cloud cover data")
+
         # Logique de correction, similaire à celle dans coordinator.py mais adaptée
         if not cloud_cover_data:
             LOGGER.warning("No cloud cover data available for adjustment")
@@ -246,6 +252,9 @@ class OpenMeteoSolarForecast:
             "energy_production_tomorrow": estimate.energy_production_tomorrow
         }
         
+        LOGGER.debug("Retrieved %d cloud timestamps for adjustment", len(cloud_timestamps))
+
+
         # Somme totale avant ajustement pour calculer le pourcentage
         total_energy_before = sum(estimate.wh_period.values())
         
@@ -268,6 +277,9 @@ class OpenMeteoSolarForecast:
         
         # Créer un journal de débogage pour les ajustements
         adjustment_log = {}
+
+        LOGGER.debug("Cloud timestamp %s -> %s%% cloud cover", timestamp_str, cloud_cover_data[i])
+
         
         # Ajuster les watts (puissance instantanée)
         for timestamp, watts in list(estimate.watts.items()):
@@ -320,6 +332,22 @@ class OpenMeteoSolarForecast:
                 if 0 <= hour_index < len(cloud_cover_data):
                     cloud_cover_percent = cloud_cover_data[hour_index]
             
+
+            if closest_timestamp:
+                LOGGER.debug("Closest cloud timestamp for %s is %s with cloud cover %.2f%%", timestamp, closest_timestamp, cloud_cover_percent)
+            else:
+                LOGGER.warning("No close cloud cover data found for timestamp: %s", timestamp)
+
+
+            correction_factor = 1.0 - (cloud_cover_percent / 100.0) * self.config_entry.options.get(
+                CONF_CLOUD_CORRECTION_FACTOR, DEFAULT_CLOUD_CORRECTION_FACTOR
+            )
+            LOGGER.debug(
+                "Applying correction factor %.4f to watts %.2f → %.2f",
+                correction_factor,
+                watts,
+                watts * correction_factor
+            )
 
             # Facteur d'ajustement: 100% de nébulosité = réduction de 70% (ajustable selon vos besoins)
 
@@ -406,7 +434,7 @@ class OpenMeteoSolarForecast:
                 day_slice = cloud_cover_data[start_idx:end_idx] if 0 <= start_idx < len(cloud_cover_data) else []
                 avg_cloud_cover = sum(day_slice) / len(day_slice) if day_slice else 0
                 
-            adjustment_factor = 1.0 - (avg_cloud_cover / 100.0 * 0.7)
+            adjustment_factor = 1.0 - (avg_cloud_cover / 100.0 * cloud_correction_factor)
             estimate.wh_days[day] = wh * adjustment_factor
             
             # Enregistrer pour le débogage ( A garder)
@@ -428,7 +456,14 @@ class OpenMeteoSolarForecast:
             "daily_adjustments": adjustment_log
         }
 
-
+        reduction = total_energy_before - total_energy_after
+        percent_reduction = 100 * reduction / total_energy_before if total_energy_before else 0
+        LOGGER.info(
+            "Cloud correction applied: total energy before=%.2f kWh, after=%.2f kWh, reduction=%.2f%%",
+            total_energy_before,
+            total_energy_after,
+            percent_reduction,
+)
 
 
     async def estimate(self) -> Estimate:
