@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from datetime import timedelta, datetime, timezone
 from collections import defaultdict
 from dataclasses import dataclass
@@ -30,6 +32,7 @@ from .const import (
     DEFAULT_CLOUD_CORRECTION_FACTOR,
     LOGGER,
 )
+
 
 
 @dataclass
@@ -217,6 +220,9 @@ class OpenMeteoSolarForecast:
             
     async def _adjust_estimate_with_cloud_cover(self, estimate: Estimate, cloud_cover_data: list) -> None:
         """Ajuster l'estimation solaire en fonction des données de nébulosité."""
+
+        LOGGER.debug("Starting adjustment of solar estimate using cloud cover data")
+
         # Logique de correction, similaire à celle dans coordinator.py mais adaptée
         if not cloud_cover_data:
             LOGGER.warning("No cloud cover data available for adjustment")
@@ -225,7 +231,9 @@ class OpenMeteoSolarForecast:
         # Récupérer la liste des timestamps des données de nébulosité depuis l'API
         cloud_timestamps = []
         try:
-            url = f"https://api.open-meteo.com/v1/forecast?latitude={str(self.latitude[0])}&longitude={str(self.longitude[0])}&hourly=time&timeformat=iso8601&timezone=auto&models={self.weather_model}&forecast_days=7"
+            hourly_params = "cloudcover"  # ou autre variable valide demandée
+            url = f"https://api.open-meteo.com/v1/forecast?latitude={self.latitude[0]}&longitude={self.longitude[0]}&hourly={hourly_params}&timeformat=iso8601&timezone=auto&models={self.weather_model}&forecast_days=7"
+            
             async with self.session.get(url) as response:
                 if response.status != 200:
                     response_text = await response.text()
@@ -234,8 +242,10 @@ class OpenMeteoSolarForecast:
                 
                 data = await response.json()
                 cloud_timestamps = data.get("hourly", {}).get("time", [])
+                cloud_cover_data = data.get("hourly", {}).get("cloudcover", [])
         except Exception as e:
             LOGGER.error("Error fetching cloud timestamps: %s", e)
+
          # Sauvegarder les valeurs originales avant ajustement pour comparaison
         self.original_values = {
             "watts": {str(k): v for k, v in estimate.watts.items()},
@@ -246,6 +256,9 @@ class OpenMeteoSolarForecast:
             "energy_production_tomorrow": estimate.energy_production_tomorrow
         }
         
+        LOGGER.debug("Retrieved %d cloud timestamps for adjustment", len(cloud_timestamps))
+
+
         # Somme totale avant ajustement pour calculer le pourcentage
         total_energy_before = sum(estimate.wh_period.values())
         
@@ -254,7 +267,6 @@ class OpenMeteoSolarForecast:
         if cloud_timestamps:
             for i, timestamp_str in enumerate(cloud_timestamps):
                 if i < len(cloud_cover_data):
-                    # Convertir le format "2024-04-06T12:00" en datetime
                     try:
                         # Supprimer le 'T' et ajouter les secondes si nécessaire
                         dt_str = timestamp_str.replace('T', ' ')
@@ -262,12 +274,17 @@ class OpenMeteoSolarForecast:
                             dt_str += ':00'  # Ajouter les secondes si non présentes
                         cloud_dt = datetime.fromisoformat(dt_str)
                         cloud_cover_dict[cloud_dt] = cloud_cover_data[i]
-                        # LOGGER.debug("Cloud timestamp mapping: %s -> %s%%", dt_str, cloud_cover_data[i])
                     except ValueError as e:
                         LOGGER.error("Error parsing timestamp %s: %s", timestamp_str, e)
-        
+
         # Créer un journal de débogage pour les ajustements
         adjustment_log = {}
+
+        # Journaliser tout le dictionnaire une fois construit
+        for dt, cloud_cover in cloud_cover_dict.items():
+            LOGGER.debug("Cloud timestamp %s -> %s%% cloud cover", dt.isoformat(), cloud_cover)
+
+
         
         # Ajuster les watts (puissance instantanée)
         for timestamp, watts in list(estimate.watts.items()):
@@ -294,13 +311,11 @@ class OpenMeteoSolarForecast:
                         min_difference = difference
                         closest_timestamp = cloud_dt
                 
-                # Si on a trouvé un timestamp proche (moins de 2 heures de différence)
+              # Si on a trouvé un timestamp proche (moins de 2 heures de différence)
                 if closest_timestamp and min_difference <= timedelta(hours=2):
                     cloud_cover_percent = cloud_cover_dict[closest_timestamp]
-                    # LOGGER.debug(
-                    #     "Matched timestamp %s with cloud data timestamp %s (diff: %s), cloud cover: %s%%",
-                    #     timestamp, closest_timestamp, min_difference, cloud_cover_percent
-                    # )
+                    # LOGGER.debug(...)
+
                 else:
                     # Fallback à l'ancienne méthode basée sur l'heure du jour
                     day_offset = (timestamp.date() - estimate.now().date()).days
@@ -308,18 +323,28 @@ class OpenMeteoSolarForecast:
                     
                     if 0 <= hour_index < len(cloud_cover_data):
                         cloud_cover_percent = cloud_cover_data[hour_index]
-                        # LOGGER.debug(
-                        #     "Using fallback hour index method for %s: day_offset=%s, hour=%s, index=%s, cloud cover: %s%%", 
-                        #     timestamp, day_offset, timestamp.hour, hour_index, cloud_cover_percent
-                        # )
-            else:
-                # Fallback à l'ancienne méthode basée sur l'heure du jour comme dernier recours
-                day_offset = (timestamp.date() - estimate.now().date()).days
-                hour_index = timestamp.hour + (day_offset * 24)
-                
-                if 0 <= hour_index < len(cloud_cover_data):
-                    cloud_cover_percent = cloud_cover_data[hour_index]
-            
+                        # LOGGER.debug(...)
+
+                # Logging final uniquement si on a bien une valeur
+                if cloud_cover_percent is not None:
+                    if closest_timestamp:
+                        if cloud_cover_percent > 0:
+                            LOGGER.debug("Closest cloud timestamp for %s is %s with cloud cover %.2f%%", timestamp, closest_timestamp, cloud_cover_percent)
+                    #else:
+                        #LOGGER.debug("Fallback cloud cover for %s is %.2f%%", timestamp, cloud_cover_percent)
+                else:
+                    LOGGER.warning("No cloud cover data available for timestamp: %s", timestamp)
+
+
+            correction_factor = 1.0 - (cloud_cover_percent / 100.0) * self.config_entry.options.get(
+                CONF_CLOUD_CORRECTION_FACTOR, DEFAULT_CLOUD_CORRECTION_FACTOR
+            )
+            # LOGGER.debug(
+            #     "Applying correction factor %.4f to watts %.2f → %.2f",
+            #     correction_factor,
+            #     watts,
+            #     watts * correction_factor
+            # )
 
             # Facteur d'ajustement: 100% de nébulosité = réduction de 70% (ajustable selon vos besoins)
 
@@ -406,14 +431,15 @@ class OpenMeteoSolarForecast:
                 day_slice = cloud_cover_data[start_idx:end_idx] if 0 <= start_idx < len(cloud_cover_data) else []
                 avg_cloud_cover = sum(day_slice) / len(day_slice) if day_slice else 0
                 
-            adjustment_factor = 1.0 - (avg_cloud_cover / 100.0 * 0.7)
+            adjustment_factor = 1.0 - (avg_cloud_cover / 100.0 * cloud_correction_factor)
             estimate.wh_days[day] = wh * adjustment_factor
             
             # Enregistrer pour le débogage ( A garder)
-            LOGGER.debug(
-                "Day adjustment - %s: avg cloud cover: %.1f%%, original: %.1f, adjusted: %.1f", 
-                date_str, avg_cloud_cover, wh, (wh * adjustment_factor)
-            )
+            if avg_cloud_cover > 0:
+                LOGGER.debug(
+                    "Day adjustment - %s: avg cloud cover: %.1f%%, original: %.1f, adjusted: %.1f", 
+                    date_str, avg_cloud_cover, wh, (wh * adjustment_factor)
+                )
         
         # Calculer les statistiques d'ajustement
         total_energy_after = sum(estimate.wh_period.values())
@@ -428,7 +454,15 @@ class OpenMeteoSolarForecast:
             "daily_adjustments": adjustment_log
         }
 
-
+        reduction = total_energy_before - total_energy_after
+        percent_reduction = 100 * reduction / total_energy_before if total_energy_before else 0
+        if percent_reduction > 0:
+            LOGGER.info(
+                "Cloud correction applied: total energy before=%.2f kWh, after=%.2f kWh, reduction=%.2f%%",
+                total_energy_before,
+                total_energy_after,
+                percent_reduction,
+)
 
 
     async def estimate(self) -> Estimate:
@@ -672,7 +706,8 @@ class OpenMeteoSolarForecast:
         )
         
         cloud_cover_data = await self._fetch_hourly_cloud_cover()
-        self._adjust_estimate_with_cloud_cover(estimate, cloud_cover_data)
+        await self._adjust_estimate_with_cloud_cover(estimate, cloud_cover_data)
+
         
         return estimate
 

@@ -1,11 +1,11 @@
 {
   "domain": "ha_sunforecast_plus",
-  "name": "SunForecast Plus",
+  "name": "Sun Forecast Plus",
   "codeowners": ["@chourmovs"],
   "config_flow": true,
   "documentation": "https://github.com/chourmovs/ha-sunforecast-plus",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/chourmovs/ha-sunforecast-plus/issues",
-  "version": "0.38"
+  "version": "0.50"
 }

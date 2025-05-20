@@ -1,6 +1,19 @@
 # HA SunForecast Plus Integration
 
-This custom component integrates the [sunforecast](https://github.com/chourmovs/ha-sunforecast-plus) with Home Assistant. It allows you to see what your solar panels may produce in the future.
+SunForecast Plus is a custom Home Assistant integration designed to provide more accurate solar production forecasts using weather data from [Open-Meteo](https://open-meteo.com/).
+
+Unlike other forecast integrations, **SunForecast Plus introduces a second-level correction based on cloud cover** percentage. Even small clouds can drastically reduce your solar production, so this integration applies a correction factor to account for cloud impact.
+
+The integration uses the `cloud_cover_total` metric from Open-Meteo to adjust the expected solar output.
+
+As shown below, different weather models (like Meteo-France or GFS) interpret 100% cloud cover differently:
+
+![Cloud Cover Models](https://i.imgur.com/2ZTGl62.png)
+
+**Tip:** Use the "lowest bidder" (e.g. `gfs_graphcast025`) and adjust the correction intensity with the `cloud_correction_factor`. A value of `0` disables cloud correction, while `1` applies full correction based on cloud cover.
+
+You can test available models for your location [here](https://open-meteo.com/en/docs?hourly=temperature_2m,cloud_cover).
+
 
 ## Installation
 
@@ -16,15 +29,38 @@ This custom component integrates the [sunforecast](https://github.com/chourmovs/
 8. A new custom integration shows up for installation "SunForecast Plus", install it.
 9. Restart Home Assistant.
 
+
 ### Manual
 
 1. Download the [latest release](https://github.com/chourmovs/ha-sunforecast-plus/releases/latest).
 2. Unpack the release and copy the `custom_components/sunforecast_plus` directory to the `custom_components` directory in your Home Assistant configuration directory.
 3. Restart Home Assistant.
 
+
 ## Configuration
 
 To use this integration in your installation, head to "Settings" in the Home Assistant UI, then "Integrations". Click on the plus button and search for "Sun Forecast Plus" and follow the instructions.
+
+Configuration part 1:
+
+![Capture1](https://i.imgur.com/vUW141X.png)
+
+Configuration part 2:
+
+![Capture2](https://i.imgur.com/C8Pgflj.png)
+
+
+**Tip**
+To see the cloud-cover correction in action, activate the specific log in your configurationb.yaml
+```
+logger:
+  default: info
+  logs:
+    custom_components.ha_sunforecast_plus: debug
+    custom_components.ha_sunforecast_plus.data_update_coordinator: debug
+```
+![Capture3](https://i.imgur.com/aJ0IIPw.png)
+
 
 ## Common Mistakes
 
@@ -65,6 +101,8 @@ If you check the "Power Now" sensor at:
 - `12:37`, it will show `300` W (data taken from `12:30`)
 
 Notice that the power sensor picks the last known value until the next update, not necessarily the closest value. Also, the power sensors are not interpolated, so the "Power Now" sensor will not show ~`150` W at `12:07`.
+
+
 
 ## Credits
 

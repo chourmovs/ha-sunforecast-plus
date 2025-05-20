@@ -260,7 +260,7 @@ class OpenMeteoSolarForecastSensorEntity(
         """Initialize Open-Meteo Solar sensor."""
         super().__init__(coordinator=coordinator)
         self.entity_description = entity_description
-        self.entity_id = f"{SENSOR_DOMAIN}.{entity_description.key}"
+        #self.entity_id = f"{SENSOR_DOMAIN}.{entity_description.key}"
         self._attr_unique_id = f"{entry_id}_{entity_description.key}"
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
@@ -275,15 +275,19 @@ class OpenMeteoSolarForecastSensorEntity(
         as they take data in 15-minute intervals and the update interval
         is 30 minutes."""
         self.async_write_ha_state()
+
+
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
         await super().async_added_to_hass()
         # Update the state of the sensor every minute without
         # fetching new data from the server.
-        async_track_utc_time_change(
-            self.hass,
-            self._update_callback,
-            second=0,
+        if "power_production_next_" in self.entity_description.key:
+            async_track_utc_time_change(
+                self.hass,
+                self._update_callback,
+                minute=[0, 15, 30, 45],
+                second=0,
         )
     @property
     def native_value(self) -> datetime | StateType:

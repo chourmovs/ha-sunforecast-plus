@@ -1,0 +1,2393 @@
+# Arborescence du dépôt
+
+  - .gitignore
+  - LICENSE.md
+  - README.md
+  - combined_output.txt
+  - generate_single_file.py
+  - hacs.json
+  - .github/
+  - .git/
+  - custom_components/
+    - custom_components/ha_sunforecast_plus/
+      - __init__.py
+      - config_flow.py
+      - const.py
+      - constants.py
+      - coordinator.py
+      - diagnostics.py
+      - energy.py
+      - estimate.py
+      - exceptions.py
+      - manifest.json
+      - models.py
+      - open_meteo_solar_forecast.py
+      - recorder.py
+      - sensor.py
+      - strings.json
+      - custom_components/ha_sunforecast_plus/translations/
+
+---
+
+
+---
+# .gitignore
+---
+
+/config
+config2/*
+
+tests/testing_config/deps
+tests/testing_config/home-assistant.log*
+
+# hass-release
+data/
+.token
+
+# Translations
+homeassistant/components/*/translations
+
+# Hide sublime text stuff
+*.sublime-project
+*.sublime-workspace
+
+# Hide some OS X stuff
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Thumbnails
+._*
+
+# IntelliJ IDEA
+.idea
+*.iml
+
+# pytest
+.pytest_cache
+.cache
+
+# GITHUB Proposed Python stuff:
+*.py[cod]
+__pycache__
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+.eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+pip-wheel-metadata
+
+# Logs
+*.log
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+coverage.xml
+nosetests.xml
+htmlcov/
+test-reports/
+test-results.xml
+test-output.xml
+pytest-*.txt
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+.python-version
+
+# emacs auto backups
+*~
+*#
+*.orig
+
+# venv stuff
+pyvenv.cfg
+pip-selfcheck.json
+venv
+.venv
+Pipfile*
+share/*
+/Scripts/
+
+# vimmy stuff
+*.swp
+*.swo
+tags
+ctags.tmp
+
+# vagrant stuff
+virtualization/vagrant/setup_done
+virtualization/vagrant/.vagrant
+virtualization/vagrant/config
+
+# Visual Studio Code
+.vscode/*
+!.vscode/cSpell.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+.env
+
+# Windows Explorer
+desktop.ini
+/home-assistant.pyproj
+/home-assistant.sln
+/.vs/*
+
+# mypy
+/.mypy_cache/*
+/.dmypy.json
+
+# Secrets
+.lokalise_token
+
+# monkeytype
+monkeytype.sqlite3
+
+# This is left behind by Azure Restore Cache
+tmp_cache
+
+# python-language-server / Rope
+.ropeproject
+
+# Will be created from script/split_tests.py
+pytest_buckets.txt
+
+
+---
+# generate_single_file.py
+---
+
+import os
+
+OUTPUT_FILE = "combined_output.txt"
+IGNORED_DIRS = {".git", ".github", "__pycache__", "venv", "node_modules", "translations"}
+IGNORED_CONTENT_EXTENSIONS = {".md"}  # <--- Exclure ces fichiers du contenu détaillé
+IGNORED_BINARY_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".exe", ".zip", ".tar", ".gz", ".7z"}
+
+def should_ignore_dir(path):
+    for ignored in IGNORED_DIRS:
+        if f"/{ignored}/" in path.replace("\\", "/"):
+            return True
+    return False
+
+def build_filetree():
+    tree_lines = []
+    for root, dirs, files in os.walk("."):
+        if should_ignore_dir(root):
+            continue
+        indent = "  " * (root.count(os.sep))
+        rel_root = os.path.relpath(root, ".")
+        if rel_root != ".":
+            tree_lines.append(f"{indent}- {rel_root}/")
+        for file in sorted(files):
+            full_path = os.path.join(root, file)
+            if should_ignore_dir(full_path):
+                continue
+            tree_indent = "  " * (full_path.count(os.sep))
+            tree_lines.append(f"{tree_indent}- {file}")
+    return "\n".join(tree_lines)
+
+def should_include_in_content(path):
+    ext = os.path.splitext(path)[1].lower()
+    if ext in IGNORED_BINARY_EXTENSIONS:
+        return False
+    if ext in IGNORED_CONTENT_EXTENSIONS:
+        return False
+    return True
+
+def main():
+    content_parts = []
+
+    # 1. Filetree en tête
+    filetree = build_filetree()
+    content_parts.append("# Arborescence du dépôt\n\n")
+    content_parts.append(filetree)
+    content_parts.append("\n\n---\n")
+
+    # 2. Contenu détaillé
+    for root, dirs, files in os.walk("."):
+        for file in sorted(files):
+            full_path = os.path.join(root, file)
+            if full_path.startswith("./" + OUTPUT_FILE):
+                continue
+            if should_ignore_dir(full_path):
+                continue
+            if not should_include_in_content(full_path):
+                continue
+            relative_path = os.path.relpath(full_path, ".")
+            content_parts.append(f"\n\n---\n# {relative_path}\n---\n\n")
+            try:
+                with open(full_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    content_parts.append(content)
+            except Exception as e:
+                content_parts.append(f"[Erreur de lecture: {e}]\n")
+
+    combined_text = ''.join(content_parts)
+
+    # 3. Estimation du nombre de tokens
+    estimated_tokens = int(len(combined_text) / 4)
+    combined_text += f"\n\n---\n# Estimation du nombre de tokens : {estimated_tokens} tokens\n"
+
+    # 4. Sauvegarde
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as output:
+        output.write(combined_text)
+
+if __name__ == "__main__":
+    main()
+
+
+---
+# hacs.json
+---
+
+{
+    "name": "Sun Forecast Plus",
+    "render_readme": true,
+    "homeassistant": "2022.11",
+    "zip_release": true,
+    "filename": "sunforecast_plus.zip"
+}
+
+
+---
+# custom_components/ha_sunforecast_plus/__init__.py
+---
+
+"""The Sunforecast Plus integration."""
+
+from __future__ import annotations
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
+
+from .const import DOMAIN
+#from .exceptions import OpenMeteoSolarForecastUpdateFailed  # noqa: F401
+from .coordinator import OpenMeteoSolarForecastDataUpdateCoordinator
+#from .models import Estimate
+#from .open_meteo_solar_forecast import OpenMeteoSolarForecast
+
+__all__ = [
+    "Estimate",
+    "OpenMeteoSolarForecast"]
+
+PLATFORMS = [Platform.SENSOR]
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up Forecast.Solar from a config entry."""
+    coordinator = OpenMeteoSolarForecastDataUpdateCoordinator(hass, entry)
+    await coordinator.async_config_entry_first_refresh()
+
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    entry.async_on_unload(entry.add_update_listener(async_update_options))
+
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok:
+        hass.data[DOMAIN].pop(entry.entry_id)
+
+    return unload_ok
+
+
+async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Update options."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+---
+# custom_components/ha_sunforecast_plus/config_flow.py
+---
+
+"""Config flow for The Sunforecast Plus integration."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import voluptuous as vol
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
+from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME
+from homeassistant.core import callback
+from homeassistant.helpers import config_validation as cv
+
+from .const import (
+    CONF_AZIMUTH,
+    CONF_BASE_URL,
+    CONF_DAMPING_EVENING,
+    CONF_DAMPING_MORNING,
+    CONF_DECLINATION,
+    CONF_EFFICIENCY_FACTOR,
+    CONF_INVERTER_POWER,
+    CONF_MODEL,
+    CONF_CLOUD_MODEL,
+    CONF_CLOUD_CORRECTION_FACTOR,
+    DEFAULT_CLOUD_CORRECTION_FACTOR,
+    CONF_MODULES_POWER,
+    DOMAIN,
+)
+
+try:
+    from homeassistant.config_entries import ConfigFlowResult  # >=2024.4.0b0
+except ImportError:
+    from homeassistant.data_entry_flow import FlowResult as ConfigFlowResult
+
+
+class OpenMeteoSolarForecastFlowHandler(ConfigFlow, domain=DOMAIN):
+    """Handle a config flow for Open-Meteo Solar Forecast."""
+
+    VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> OpenMeteoSolarForecastOptionFlowHandler:
+        """Get the options flow for this handler."""
+        return OpenMeteoSolarForecastOptionFlowHandler()
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle a flow initiated by the user."""
+        if user_input is not None:
+            return self.async_create_entry(
+                title=user_input[CONF_NAME],
+                data={
+                    CONF_LATITUDE: user_input[CONF_LATITUDE],
+                    CONF_LONGITUDE: user_input[CONF_LONGITUDE],
+                },
+                options={
+                    CONF_API_KEY: user_input[CONF_API_KEY],
+                    CONF_AZIMUTH: user_input[CONF_AZIMUTH],
+                    CONF_BASE_URL: user_input[CONF_BASE_URL],
+                    CONF_DAMPING_MORNING: user_input[CONF_DAMPING_MORNING],
+                    CONF_DAMPING_EVENING: user_input[CONF_DAMPING_EVENING],
+                    CONF_DECLINATION: user_input[CONF_DECLINATION],
+                    CONF_MODULES_POWER: user_input[CONF_MODULES_POWER],
+                    CONF_INVERTER_POWER: user_input[CONF_INVERTER_POWER],
+                    CONF_EFFICIENCY_FACTOR: user_input[CONF_EFFICIENCY_FACTOR],
+                    CONF_MODEL: user_input[CONF_MODEL],
+                    CONF_CLOUD_MODEL: user_input[CONF_CLOUD_MODEL], 
+                    CONF_CLOUD_CORRECTION_FACTOR: user_input[CONF_CLOUD_CORRECTION_FACTOR], 
+
+                },
+            )
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_API_KEY, default=""): str,
+                    vol.Required(
+                        CONF_BASE_URL, default="https://api.open-meteo.com"
+                    ): str,
+                    vol.Required(
+                        CONF_NAME, default=self.hass.config.location_name
+                    ): str,
+                    vol.Required(
+                        CONF_LATITUDE, default=self.hass.config.latitude
+                    ): cv.latitude,
+                    vol.Required(
+                        CONF_LONGITUDE, default=self.hass.config.longitude
+                    ): cv.longitude,
+                    vol.Required(CONF_DECLINATION, default=25): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=90)
+                    ),
+                    vol.Required(CONF_AZIMUTH, default=180): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=360)
+                    ),
+                    vol.Required(CONF_MODULES_POWER): vol.All(
+                        vol.Coerce(int), vol.Range(min=1)
+                    ),
+                    vol.Required(CONF_INVERTER_POWER, default=0): vol.All(
+                        vol.Coerce(int), vol.Range(min=0)
+                    ),
+                    vol.Optional(CONF_DAMPING_MORNING, default=0.0): vol.Coerce(float),
+                    vol.Optional(CONF_DAMPING_EVENING, default=0.0): vol.Coerce(float),
+                    vol.Optional(CONF_EFFICIENCY_FACTOR, default=1.0): vol.All(
+                        vol.Coerce(float), vol.Range(min=0)
+                    ),
+                    vol.Optional(CONF_MODEL, default="best_match"): str,
+                    vol.Optional(CONF_CLOUD_MODEL, default="best_match"): str,
+                    vol.Optional(CONF_CLOUD_CORRECTION_FACTOR, default=0.5
+): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+                }
+            ),
+        )
+
+
+class OpenMeteoSolarForecastOptionFlowHandler(OptionsFlow):
+    """Handle options."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options."""
+        errors = {}
+        if user_input is not None:
+            return self.async_create_entry(
+                title="", data=user_input | {CONF_API_KEY: user_input.get(CONF_API_KEY)}
+            )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_API_KEY,
+                        description={
+                            "suggested_value": self.config_entry.options.get(
+                                CONF_API_KEY, ""
+                            )
+                        },
+                    ): str,
+                    vol.Required(
+                        CONF_BASE_URL,
+                        default=self.config_entry.options[CONF_BASE_URL],
+                    ): str,
+                    vol.Required(
+                        CONF_DECLINATION,
+                        default=self.config_entry.options[CONF_DECLINATION],
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=90)),
+                    vol.Required(
+                        CONF_AZIMUTH,
+                        default=self.config_entry.options.get(CONF_AZIMUTH),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=-0, max=360)),
+                    vol.Required(
+                        CONF_MODULES_POWER,
+                        default=self.config_entry.options[CONF_MODULES_POWER],
+                    ): vol.All(vol.Coerce(int), vol.Range(min=1)),
+                    vol.Optional(
+                        CONF_DAMPING_MORNING,
+                        default=self.config_entry.options.get(
+                            CONF_DAMPING_MORNING, 0.0
+                        ),
+                    ): vol.Coerce(float),
+                    vol.Optional(
+                        CONF_DAMPING_EVENING,
+                        default=self.config_entry.options.get(
+                            CONF_DAMPING_EVENING, 0.0
+                        ),
+                    ): vol.Coerce(float),
+                    vol.Required(
+                        CONF_INVERTER_POWER,
+                        default=self.config_entry.options.get(CONF_INVERTER_POWER, 0),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0)),
+                    vol.Optional(
+                        CONF_EFFICIENCY_FACTOR,
+                        default=self.config_entry.options.get(
+                            CONF_EFFICIENCY_FACTOR, 1.0
+                        ),
+                    ): vol.All(vol.Coerce(float), vol.Range(min=0)),
+                    vol.Optional(
+                        CONF_MODEL,
+                        default=self.config_entry.options.get(CONF_MODEL, "best_match"),
+                    ): str,
+                    vol.Optional(
+                        CONF_CLOUD_MODEL,
+                        default=self.config_entry.options.get(CONF_CLOUD_MODEL, "best_match"),
+                    ): str,
+                    vol.Optional(
+                        CONF_CLOUD_CORRECTION_FACTOR,
+                        default=self.config_entry.options.get(
+                            CONF_CLOUD_CORRECTION_FACTOR, DEFAULT_CLOUD_CORRECTION_FACTOR
+                        ),
+                    ): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+                }
+            ),
+            errors=errors,
+        )
+
+
+---
+# custom_components/ha_sunforecast_plus/const.py
+---
+
+"""Constants for the Open-Meteo Solar Forecast integration."""
+
+from __future__ import annotations
+
+import logging
+
+DOMAIN = "ha_sunforecast_plus"
+LOGGER = logging.getLogger(__package__)
+
+CONF_BASE_URL = "base_url"
+CONF_DECLINATION = "declination"
+CONF_AZIMUTH = "azimuth"
+CONF_MODULES_POWER = "modules_power"
+CONF_DAMPING_MORNING = "damping_morning"
+CONF_DAMPING_EVENING = "damping_evening"
+CONF_INVERTER_POWER = "inverter_power"
+CONF_EFFICIENCY_FACTOR = "efficiency_factor"
+CONF_MODEL = "model"
+CONF_CLOUD_MODEL ="cloud_model"
+CONF_CLOUD_CORRECTION_FACTOR = "cloud_correction_factor"
+DEFAULT_CLOUD_CORRECTION_FACTOR = 0.5
+
+ATTR_WATTS = "watts"
+ATTR_WH_PERIOD = "wh_period"
+
+
+---
+# custom_components/ha_sunforecast_plus/constants.py
+---
+
+"""Constants for the solar forecast module."""
+
+from dataclasses import dataclass
+
+# STC specifies a cell temperature of 25°C and an irradiance of 1000 W/m².
+# The temperature coefficient of most solar panels is 0.004°C⁻¹.
+# Source: https://www.researchgate.net/publication/372240079_Solar_Prediction_Strategy_for_Managing_Virtual_Power_Stations
+
+
+ALPHA_TEMP = -0.004  # °C-1
+G_STC = 1000.0  # W/m2
+TEMP_STC_CELL = 25.0  # °C
+
+
+# Ross Model Constants
+#
+# Source: https://www.researchgate.net/publication/275438802_Thermal_effects_of_the_extended_holographic_regions_for_holographic_planar_concentrator
+@dataclass
+class RossModelConstants:
+    """Constants for the Ross model."""
+
+    WELL_COOLED = 0.0200
+    FREE_STANDING = 0.0208
+    FLAT_ON_ROOF = 0.0260
+    NOT_SO_WELL_COOLED = 0.0342
+    TRANSPARENT_PV = 0.0455
+    FACADE_INTEGRATED = 0.0538
+    ON_SLOPED_ROOF = 0.0563
+
+
+---
+# custom_components/ha_sunforecast_plus/coordinator.py
+---
+
+"""DataUpdateCoordinator for the Sunforecast Plus integration."""
+from __future__ import annotations
+from datetime import timedelta, datetime, timezone
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from .open_meteo_solar_forecast import Estimate, OpenMeteoSolarForecast
+
+from .const import (
+    CONF_AZIMUTH,
+    CONF_BASE_URL,
+    CONF_DAMPING_EVENING,
+    CONF_DAMPING_MORNING,
+    CONF_DECLINATION,
+    CONF_EFFICIENCY_FACTOR,
+    CONF_INVERTER_POWER,
+    CONF_MODULES_POWER,
+    CONF_MODEL,
+    DOMAIN,
+    LOGGER,
+)
+from .exceptions import OpenMeteoSolarForecastUpdateFailed
+
+def clean_value(value):
+    """Remove brackets and convert to float, then return as string."""
+    if isinstance(value, str):
+        value = value.strip('[]')
+    cleaned_value = round(float(value), 2)
+    LOGGER.debug("Cleaned value: %s", cleaned_value)
+    return str(cleaned_value)
+
+class OpenMeteoSolarForecastDataUpdateCoordinator(DataUpdateCoordinator[Estimate]):
+    """The Solar Forecast Data Update Coordinator."""
+    config_entry: ConfigEntry
+
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Initialize the Solar Forecast coordinator."""
+        self.config_entry = entry
+        self.daily_forecasts = {}  # Dictionnaire pour stocker les prévisions journalières
+
+        # Our option flow may cause it to be an empty string,
+        # this if statement is here to catch that.
+        api_key = entry.options.get(CONF_API_KEY) or None
+
+        # Handle new options that were added after the initial release
+        ac_kwp = entry.options.get(CONF_INVERTER_POWER, 0)
+        ac_kwp = ac_kwp / 1000 if ac_kwp else None
+
+        # Ensure latitude and longitude are valid numbers
+        latitude = clean_value(entry.data[CONF_LATITUDE])
+        longitude = clean_value(entry.data[CONF_LONGITUDE])
+        if not (-90 <= float(latitude) <= 90) or not (-180 <= float(longitude) <= 180):
+            raise ValueError("Invalid latitude or longitude values")
+
+        self.forecast = OpenMeteoSolarForecast(
+            api_key=api_key,
+            session=async_get_clientsession(hass),
+            latitude=float(latitude),
+            longitude=float(longitude),
+            azimuth=entry.options[CONF_AZIMUTH] - 180,
+            base_url=entry.options[CONF_BASE_URL],
+            ac_kwp=ac_kwp,
+            dc_kwp=(entry.options[CONF_MODULES_POWER] / 1000),
+            declination=entry.options[CONF_DECLINATION],
+            efficiency_factor=entry.options[CONF_EFFICIENCY_FACTOR],
+            damping_morning=entry.options.get(CONF_DAMPING_MORNING, 0.0),
+            damping_evening=entry.options.get(CONF_DAMPING_EVENING, 0.0),
+            weather_model=entry.options.get(CONF_MODEL, "best_match"),
+            config_entry=entry,
+        )
+
+        # Initialiser les attributs pour le débogage
+        self.cloud_cover_data = []
+        self.original_values = {}
+        self.adjustment_stats = {}
+
+        update_interval = timedelta(minutes=30)
+
+        super().__init__(hass, LOGGER, name=DOMAIN, update_interval=update_interval)
+
+    async def _async_update_data(self) -> Estimate:
+        """Fetch Open-Meteo Solar Forecast estimates."""
+        try:
+            estimate = await self.forecast.estimate()
+            
+            for day in estimate.wh_days:
+                date_str = day.isoformat()
+                self.daily_forecasts[date_str] = estimate.wh_days[day]
+            return estimate
+        
+        except Exception as error:
+            LOGGER.error("Error fetching data: %s", error)
+            raise OpenMeteoSolarForecastUpdateFailed(f"Error fetching data: {error}") from error
+
+
+---
+# custom_components/ha_sunforecast_plus/diagnostics.py
+---
+
+"""Diagnostics support for The Sunforecast Plus integration."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from open_meteo_solar_forecast import Estimate
+
+from homeassistant.components.diagnostics import async_redact_data
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_API_KEY, CONF_LATITUDE, CONF_LONGITUDE
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+
+from .const import DOMAIN
+
+TO_REDACT = {
+    CONF_API_KEY,
+    CONF_LATITUDE,
+    CONF_LONGITUDE,
+}
+
+
+async def async_get_config_entry_diagnostics(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> dict[str, Any]:
+    """Return diagnostics for a config entry."""
+    coordinator: DataUpdateCoordinator[Estimate] = hass.data[DOMAIN][entry.entry_id]
+
+    return {
+        "entry": {
+            "title": entry.title,
+            "data": async_redact_data(entry.data, TO_REDACT),
+            "options": async_redact_data(entry.options, TO_REDACT),
+        },
+        "data": {
+            "energy_production_today": coordinator.data.energy_production_today,
+            "energy_production_today_remaining": coordinator.data.energy_production_today_remaining,
+            "energy_production_tomorrow": coordinator.data.energy_production_tomorrow,
+            "energy_current_hour": coordinator.data.energy_current_hour,
+            "power_production_now": coordinator.data.power_production_now,
+            "watts": {
+                watt_datetime.isoformat(): watt_value
+                for watt_datetime, watt_value in coordinator.data.watts.items()
+            },
+            "wh_days": {
+                wh_datetime.isoformat(): wh_value
+                for wh_datetime, wh_value in coordinator.data.wh_days.items()
+            },
+            "wh_period": {
+                wh_datetime.isoformat(): wh_value
+                for wh_datetime, wh_value in coordinator.data.wh_period.items()
+            },
+        },
+        "account": {
+            "timezone": coordinator.data.timezone,
+        },
+    }
+
+
+---
+# custom_components/ha_sunforecast_plus/energy.py
+---
+
+"""Energy platform."""
+
+from __future__ import annotations
+
+from homeassistant.core import HomeAssistant
+
+from .const import DOMAIN
+
+
+async def async_get_solar_forecast(
+    hass: HomeAssistant, config_entry_id: str
+) -> dict[str, dict[str, float | int]] | None:
+    """Get solar forecast for a config entry ID."""
+    if (coordinator := hass.data[DOMAIN].get(config_entry_id)) is None:
+        return None
+
+    return {
+        "wh_hours": {
+            timestamp.isoformat(): val
+            for timestamp, val in coordinator.data.wh_period.items()
+        }
+    }
+
+
+---
+# custom_components/ha_sunforecast_plus/estimate.py
+---
+
+"""Data models for the Forecast.Solar API."""
+
+from __future__ import annotations
+
+import datetime as dt
+from dataclasses import dataclass
+
+
+def _timed_value(at: dt.datetime, data: dict[dt.datetime, int]) -> int | None:
+    """Return the value for a specific time."""
+    value = None
+    for timestamp, cur_value in data.items():
+        if timestamp > at:
+            return value
+        value = cur_value
+
+    return None
+
+
+def _interval_value_sum(
+    interval_begin: dt.datetime, interval_end: dt.datetime, data: dict[dt.datetime, int]
+) -> int:
+    """Return the sum of values in interval."""
+    total = 0
+
+    for timestamp, wh in data.items():
+        # Skip all until this hour
+        if timestamp < interval_begin:
+            continue
+
+        if timestamp >= interval_end:
+            break
+
+        total += wh
+
+    return total
+
+
+def _interval_value_sum_w_to_wh(
+    interval_begin: dt.datetime, interval_end: dt.datetime, data: dict[dt.datetime, int]
+) -> int:
+    """Convert W to Wh and return the sum of values in interval."""
+    total = 0
+    sorted_timestamps = sorted(data.keys())
+
+    for i, timestamp in enumerate(sorted_timestamps):
+        # Skip all until this hour
+        if timestamp < interval_begin:
+            continue
+
+        if timestamp >= interval_end:
+            break
+
+        # Calculate the time difference to the next timestamp or interval_end
+        next_timestamp = (
+            sorted_timestamps[i + 1] if i + 1 < len(sorted_timestamps) else interval_end
+        )
+        if next_timestamp > interval_end:
+            next_timestamp = interval_end
+
+        # Calculate the duration in hours
+        duration_hours = (next_timestamp - timestamp).total_seconds() / 3600
+
+        # Add the energy in watt-hours
+        total += data[timestamp] * duration_hours
+
+    return total
+
+
+@dataclass
+class Estimate:
+    """Object holding estimate forecast results from Forecast.Solar.
+
+    Attributes
+    ----------
+        watts: Estimated solar power output per time period.
+        wh_period: Estimated solar energy production differences per hour.
+        wh_days: Estimated solar energy production per day.
+
+    """
+
+    watts: dict[dt.datetime, int]
+    wh_period: dict[dt.datetime, int]
+    wh_days: dict[dt.datetime, int]
+    api_timezone: dt.timezone
+
+    @property
+    def timezone(self) -> timezone:
+        """Return API timezone information."""
+        return self.api_timezone
+
+    @property
+    def energy_production_today(self) -> int:
+        """Return estimated energy produced today."""
+        return self.day_production(self.now().date())
+
+    @property
+    def energy_production_tomorrow(self) -> int:
+        """Return estimated energy produced today."""
+        return self.day_production(self.now().date() + dt.timedelta(days=1))
+
+    @property
+    def energy_production_today_remaining(self) -> int:
+        """Return estimated energy produced in rest of today."""
+        return _interval_value_sum_w_to_wh(
+            self.now(),
+            self.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            + dt.timedelta(days=1),
+            self.watts,
+        )
+
+    @property
+    def power_production_now(self) -> int:
+        """Return estimated power production right now."""
+        return self.power_production_at_time(self.now())
+
+    @property
+    def power_highest_peak_time_today(self) -> dt.datetime:
+        """Return datetime with highest power production moment today."""
+        return self.peak_production_time(self.now().date())
+
+    @property
+    def power_highest_peak_time_tomorrow(self) -> dt.datetime:
+        """Return datetime with highest power production moment tomorrow."""
+        return self.peak_production_time(self.now().date() + dt.timedelta(days=1))
+
+    @property
+    def energy_current_hour(self) -> int:
+        """Return the estimated energy production for the current hour."""
+        return _interval_value_sum(
+            self.now().replace(minute=0, second=0, microsecond=0),
+            self.now().replace(minute=0, second=0, microsecond=0)
+            + dt.timedelta(hours=1),
+            self.wh_period,
+        )
+
+    def day_production(self, specific_date: dt.date) -> int:
+        """Return the day production."""
+        for date, production in self.wh_days.items():
+            if date == specific_date:
+                return production
+
+        return 0
+
+    def now(self) -> dt.datetime:
+        """Return the current timestamp in the API timezone."""
+        return dt.datetime.now(tz=self.api_timezone)
+
+    def peak_production_time(self, specific_date: dt.date) -> dt.datetime:
+        """Return the peak time on a specific date."""
+        value = max(
+            (watt for date, watt in self.watts.items() if date.date() == specific_date),
+            default=None,
+        )
+        for timestamp, watt in self.watts.items():
+            if watt == value and timestamp.date() == specific_date:
+                return timestamp
+        raise RuntimeError("No peak production time found")
+
+    def power_production_at_time(self, time: dt.datetime) -> int:
+        """Return estimated power production at a specific time."""
+        return _timed_value(time, self.watts) or 0
+
+    def sum_energy_production(self, period_hours: int) -> int:
+        """Return the sum of the energy production."""
+        now = self.now().replace(minute=59, second=59, microsecond=999)
+        until = now + dt.timedelta(hours=period_hours)
+
+        return _interval_value_sum(now, until, self.wh_period)
+
+
+---
+# custom_components/ha_sunforecast_plus/exceptions.py
+---
+
+class OpenMeteoSolarForecastUpdateFailed(Exception):
+    """Custom exception to handle update failures."""
+
+class OpenMeteoSolarForecastError(Exception):
+    """Generic OpenMeteoSolarForecast exception."""
+
+
+class OpenMeteoSolarForecastConnectionError(OpenMeteoSolarForecastError):
+    """OpenMeteoSolarForecast connection exception."""
+
+
+class OpenMeteoSolarForecastConfigError(OpenMeteoSolarForecastError):
+    """OpenMeteoSolarForecast configuration exception."""
+
+
+class OpenMeteoSolarForecastAuthenticationError(OpenMeteoSolarForecastError):
+    """OpenMeteoSolarForecast authentication exception."""
+
+
+class OpenMeteoSolarForecastRequestError(OpenMeteoSolarForecastError):
+    """OpenMeteoSolarForecast request exception."""
+
+
+class OpenMeteoSolarForecastRatelimitError(OpenMeteoSolarForecastRequestError):
+    """OpenMeteoSolarForecast rate limit exception."""
+
+
+class OpenMeteoSolarForecastInvalidModel(OpenMeteoSolarForecastError):
+    """OpenMeteoSolarForecast invalid model exception."""
+
+---
+# custom_components/ha_sunforecast_plus/manifest.json
+---
+
+{
+  "domain": "ha_sunforecast_plus",
+  "name": "SunForecast Plus",
+  "codeowners": ["@chourmovs"],
+  "config_flow": true,
+  "documentation": "https://github.com/chourmovs/ha-sunforecast-plus",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/chourmovs/ha-sunforecast-plus/issues",
+  "version": "0.38"
+}
+
+
+---
+# custom_components/ha_sunforecast_plus/models.py
+---
+
+"""Data models for the Forecast.Solar API."""
+
+from __future__ import annotations
+
+import datetime as dt
+from dataclasses import dataclass
+
+
+def _timed_value(at: dt.datetime, data: dict[dt.datetime, int]) -> int | None:
+    """Return the value for a specific time."""
+    value = None
+    for timestamp, cur_value in data.items():
+        if timestamp > at:
+            return value
+        value = cur_value
+
+    return None
+
+
+def _interval_value_sum(
+    interval_begin: dt.datetime, interval_end: dt.datetime, data: dict[dt.datetime, int]
+) -> int:
+    """Return the sum of values in interval."""
+    total = 0
+
+    for timestamp, wh in data.items():
+        # Skip all until this hour
+        if timestamp < interval_begin:
+            continue
+
+        if timestamp >= interval_end:
+            break
+
+        total += wh
+
+    return total
+
+
+def _interval_value_sum_w_to_wh(
+    interval_begin: dt.datetime, interval_end: dt.datetime, data: dict[dt.datetime, int]
+) -> int:
+    """Convert W to Wh and return the sum of values in interval."""
+    total = 0
+    sorted_timestamps = sorted(data.keys())
+
+    for i, timestamp in enumerate(sorted_timestamps):
+        # Skip all until this hour
+        if timestamp < interval_begin:
+            continue
+
+        if timestamp >= interval_end:
+            break
+
+        # Calculate the time difference to the next timestamp or interval_end
+        next_timestamp = (
+            sorted_timestamps[i + 1] if i + 1 < len(sorted_timestamps) else interval_end
+        )
+        if next_timestamp > interval_end:
+            next_timestamp = interval_end
+
+        # Calculate the duration in hours
+        duration_hours = (next_timestamp - timestamp).total_seconds() / 3600
+
+        # Add the energy in watt-hours
+        total += data[timestamp] * duration_hours
+
+    return total
+
+
+@dataclass
+class Estimate:
+    """Object holding estimate forecast results from Forecast.Solar.
+
+    Attributes
+    ----------
+        watts: Estimated solar power output per time period.
+        wh_period: Estimated solar energy production differences per hour.
+        wh_days: Estimated solar energy production per day.
+
+    """
+
+    watts: dict[dt.datetime, int]
+    wh_period: dict[dt.datetime, int]
+    wh_days: dict[dt.datetime, int]
+    api_timezone: dt.timezone
+
+    @property
+    def timezone(self) -> timezone:
+        """Return API timezone information."""
+        return self.api_timezone
+
+    @property
+    def energy_production_today(self) -> int:
+        """Return estimated energy produced today."""
+        return self.day_production(self.now().date())
+
+    @property
+    def energy_production_tomorrow(self) -> int:
+        """Return estimated energy produced today."""
+        return self.day_production(self.now().date() + dt.timedelta(days=1))
+
+    @property
+    def energy_production_today_remaining(self) -> int:
+        """Return estimated energy produced in rest of today."""
+        return _interval_value_sum_w_to_wh(
+            self.now(),
+            self.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            + dt.timedelta(days=1),
+            self.watts,
+        )
+
+    @property
+    def power_production_now(self) -> int:
+        """Return estimated power production right now."""
+        return self.power_production_at_time(self.now())
+
+    @property
+    def power_highest_peak_time_today(self) -> dt.datetime:
+        """Return datetime with highest power production moment today."""
+        return self.peak_production_time(self.now().date())
+
+    @property
+    def power_highest_peak_time_tomorrow(self) -> dt.datetime:
+        """Return datetime with highest power production moment tomorrow."""
+        return self.peak_production_time(self.now().date() + dt.timedelta(days=1))
+
+    @property
+    def energy_current_hour(self) -> int:
+        """Return the estimated energy production for the current hour."""
+        return _interval_value_sum(
+            self.now().replace(minute=0, second=0, microsecond=0),
+            self.now().replace(minute=0, second=0, microsecond=0)
+            + dt.timedelta(hours=1),
+            self.wh_period,
+        )
+
+    def day_production(self, specific_date: dt.date) -> int:
+        """Return the day production."""
+        for date, production in self.wh_days.items():
+            if date == specific_date:
+                return production
+
+        return 0
+
+    def now(self) -> dt.datetime:
+        """Return the current timestamp in the API timezone."""
+        return dt.datetime.now(tz=self.api_timezone)
+
+    def peak_production_time(self, specific_date: dt.date) -> dt.datetime:
+        """Return the peak time on a specific date."""
+        value = max(
+            (watt for date, watt in self.watts.items() if date.date() == specific_date),
+            default=None,
+        )
+        for timestamp, watt in self.watts.items():
+            if watt == value and timestamp.date() == specific_date:
+                return timestamp
+        raise RuntimeError("No peak production time found")
+
+    def power_production_at_time(self, time: dt.datetime) -> int:
+        """Return estimated power production at a specific time."""
+        return _timed_value(time, self.watts) or 0
+
+    def sum_energy_production(self, period_hours: int) -> int:
+        """Return the sum of the energy production."""
+        now = self.now().replace(minute=59, second=59, microsecond=999)
+        until = now + dt.timedelta(hours=period_hours)
+
+        return _interval_value_sum(now, until, self.wh_period)
+
+
+---
+# custom_components/ha_sunforecast_plus/open_meteo_solar_forecast.py
+---
+
+"""Asynchronous Python client for the API."""
+
+from __future__ import annotations
+
+from datetime import timedelta, datetime, timezone
+from collections import defaultdict
+from dataclasses import dataclass
+from datetime import datetime as dt
+from datetime import timedelta, timezone
+from typing import Any, Self
+
+from aiohttp import ClientSession
+
+from .constants import ALPHA_TEMP, G_STC, TEMP_STC_CELL, RossModelConstants
+from .exceptions import (
+    OpenMeteoSolarForecastAuthenticationError,
+    OpenMeteoSolarForecastConfigError,
+    OpenMeteoSolarForecastConnectionError,
+    OpenMeteoSolarForecastError,
+    OpenMeteoSolarForecastInvalidModel,
+    OpenMeteoSolarForecastRatelimitError,
+    OpenMeteoSolarForecastRequestError,
+)
+from .models import Estimate
+from homeassistant.config_entries import ConfigEntry
+
+from .const import (
+
+    CONF_CLOUD_CORRECTION_FACTOR,
+    DEFAULT_CLOUD_CORRECTION_FACTOR,
+    LOGGER,
+)
+
+
+@dataclass
+class OpenMeteoSolarForecast:
+    """Main class for handling connections with the API."""
+
+    azimuth: float | list[float]
+    declination: float | list[float]
+    dc_kwp: float | list[float]
+    latitude: float | list[float]
+    longitude: float | list[float]
+    config_entry: ConfigEntry
+
+
+    past_days: int = 92
+    forecast_days: int = 16
+
+    ac_kwp: float | None = None
+    api_key: str | None = None
+    base_url: str | None = None
+    weather_model: str | None = None
+    damping_morning: float | list[float] = 0.0
+    damping_evening: float | list[float] = 0.0
+    efficiency_factor: float | list[float] = 1.0
+    
+    session: ClientSession | None = None
+    _close_session: bool = False
+
+    def __post_init__(self) -> None:
+        """Initialize the OpenMeteoSolarForecast object."""
+        if self.base_url is None:
+            self.base_url = "https://api.open-meteo.com"
+        if self.ac_kwp is None:
+            self.ac_kwp = float("inf")
+
+        # Validate list parameters
+        if list in map(
+            type,
+            (
+                self.azimuth,
+                self.declination,
+                self.dc_kwp,
+                self.latitude,
+                self.longitude,
+            ),
+        ):
+            if not all(
+                isinstance(param, list) and len(param) == len(self.dc_kwp)
+                for param in (
+                    self.azimuth,
+                    self.declination,
+                    self.dc_kwp,
+                    self.latitude,
+                    self.longitude,
+                )
+            ):
+                raise OpenMeteoSolarForecastConfigError(
+                    "The parameters must be of the same length"
+                )
+        else:
+            self.azimuth = [self.azimuth]
+            self.declination = [self.declination]
+            self.dc_kwp = [self.dc_kwp]
+            self.latitude = [self.latitude]
+            self.longitude = [self.longitude]
+
+        def test_param_len(attr_name: str, other_attr: list[Any]) -> list[Any]:
+            """Validate the length of a param and return a list of the same length."""
+            attr = getattr(self, attr_name)
+            if isinstance(attr, list):
+                if len(attr) != len(other_attr):
+                    msg = f"{attr_name} must be the same length as the other parameters"
+                    raise OpenMeteoSolarForecastConfigError(msg)
+            else:
+                attr = [attr] * len(other_attr)
+            return attr
+
+        self.efficiency_factor = test_param_len("efficiency_factor", self.dc_kwp)
+        self.damping_morning = test_param_len("damping_morning", self.dc_kwp)
+        self.damping_evening = test_param_len("damping_evening", self.dc_kwp)
+
+    async def _request(
+        self,
+        uri: str,
+        *,
+        params: dict[str, Any] | None = None,
+    ) -> Any:
+        """Handle a request to the API.
+
+        A generic method for sending/handling HTTP requests done against the API.
+
+        Args:
+        ----
+            uri: Request URI, for example, '/v1/forecast'.
+
+        Returns:
+        -------
+            A Python dictionary (JSON decoded) with the response from the API.
+
+        Raises:
+        ------
+            OpenMeteoSolarForecastAuthenticationError: If the API key is invalid.
+            OpenMeteoSolarForecastConnectionError: An error occurred while communicating
+                with the API.
+            OpenMeteoSolarForecastError: Received an unexpected response from the API.
+            OpenMeteoSolarForecastRequestError: There is something wrong with the
+                variables used in the request.
+            OpenMeteoSolarForecastRatelimitError: The number of requests has exceeded
+                the rate limit of the API.
+
+        """
+        # Connect as normal
+        if self.session is None:
+            self.session = ClientSession()
+            self._close_session = True
+
+        # Add the API key to the request
+        if self.api_key:
+            params = params or {}
+            params["apikey"] = self.api_key
+
+        # Add the weather model to the request
+        if self.weather_model:
+            if "," in self.weather_model:
+                raise OpenMeteoSolarForecastInvalidModel(
+                    "Multiple models are not supported"
+                )
+            params = params or {}
+            params["models"] = self.weather_model
+
+        # Get response from the API
+        response = await self.session.request(
+            "GET",
+            self.base_url + uri,
+            params=params,
+        )
+
+        if response.status in (502, 503):
+            raise OpenMeteoSolarForecastConnectionError("The API is unreachable")
+
+        if response.status == 400:
+            raise OpenMeteoSolarForecastRequestError("Bad request")
+
+        if response.status in (401, 403):
+            raise OpenMeteoSolarForecastAuthenticationError("Invalid API key")
+
+        if response.status == 422:
+            raise OpenMeteoSolarForecastConfigError("Invalid configuration")
+
+        if response.status == 429:
+            raise OpenMeteoSolarForecastRatelimitError("Rate limit exceeded")
+
+        response.raise_for_status()
+
+        content_type = response.headers.get("Content-Type", "")
+        if "application/json" not in content_type:
+            text = await response.text()
+            raise OpenMeteoSolarForecastError(
+                "Unexpected response from the API",
+                {"Content-Type": content_type, "response": text},
+            )
+
+        return await response.json()
+
+    async def _fetch_hourly_cloud_cover(self) -> list:
+            """Fetch hourly cloud cover data from open-meteo.com."""
+            # Cette méthode est similaire à celle dans coordinator.py
+            latitude = str(self.latitude[0])  # Utilisation du premier élément de la liste
+            longitude = str(self.longitude[0])  # Utilisation du premier élément de la liste
+            cloud_cover_model = self.weather_model  # Utilisation de weather_model
+            LOGGER.debug("Fetching cloud cover data for latitude: %s, longitude: %s", latitude, longitude)
+            
+            url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&hourly=cloud_cover&timeformat=iso8601&timezone=auto&models={cloud_cover_model}&forecast_days=7"
+            LOGGER.debug("Fetching cloud cover data from URL: %s", url)
+            
+            async with self.session.get(url) as response:
+                if response.status != 200:
+                    response_text = await response.text()
+                    LOGGER.error("Failed to fetch cloud cover data: %s. Response: %s", response.status, response_text)
+                    raise Exception(f"Failed to fetch cloud cover data: {response.status}")
+                
+                data = await response.json()
+                cloud_cover_data = data.get("hourly", {}).get("cloud_cover", [])
+                return cloud_cover_data
+            
+    async def _adjust_estimate_with_cloud_cover(self, estimate: Estimate, cloud_cover_data: list) -> None:
+        """Ajuster l'estimation solaire en fonction des données de nébulosité."""
+        # Logique de correction, similaire à celle dans coordinator.py mais adaptée
+        if not cloud_cover_data:
+            LOGGER.warning("No cloud cover data available for adjustment")
+            return
+        
+        # Récupérer la liste des timestamps des données de nébulosité depuis l'API
+        cloud_timestamps = []
+        try:
+            url = f"https://api.open-meteo.com/v1/forecast?latitude={str(self.latitude[0])}&longitude={str(self.longitude[0])}&hourly=time&timeformat=iso8601&timezone=auto&models={self.weather_model}&forecast_days=7"
+            async with self.session.get(url) as response:
+                if response.status != 200:
+                    response_text = await response.text()
+                    LOGGER.error("Failed to fetch cloud timestamps: %s. Response: %s", response.status, response_text)
+                    raise Exception(f"Failed to fetch cloud timestamps: {response.status}")
+                
+                data = await response.json()
+                cloud_timestamps = data.get("hourly", {}).get("time", [])
+        except Exception as e:
+            LOGGER.error("Error fetching cloud timestamps: %s", e)
+         # Sauvegarder les valeurs originales avant ajustement pour comparaison
+        self.original_values = {
+            "watts": {str(k): v for k, v in estimate.watts.items()},
+            "wh_period": {str(k): v for k, v in estimate.wh_period.items()},
+            "wh_days": {str(k): v for k, v in estimate.wh_days.items()},
+            "power_production_now": estimate.power_production_now,
+            "energy_production_today": estimate.energy_production_today,
+            "energy_production_tomorrow": estimate.energy_production_tomorrow
+        }
+        
+        # Somme totale avant ajustement pour calculer le pourcentage
+        total_energy_before = sum(estimate.wh_period.values())
+        
+        # Convertir les timestamps cloud en dictionnaire pour faciliter la recherche
+        cloud_cover_dict = {}
+        if cloud_timestamps:
+            for i, timestamp_str in enumerate(cloud_timestamps):
+                if i < len(cloud_cover_data):
+                    # Convertir le format "2024-04-06T12:00" en datetime
+                    try:
+                        # Supprimer le 'T' et ajouter les secondes si nécessaire
+                        dt_str = timestamp_str.replace('T', ' ')
+                        if len(dt_str.split(':')) == 2:
+                            dt_str += ':00'  # Ajouter les secondes si non présentes
+                        cloud_dt = datetime.fromisoformat(dt_str)
+                        cloud_cover_dict[cloud_dt] = cloud_cover_data[i]
+                        # LOGGER.debug("Cloud timestamp mapping: %s -> %s%%", dt_str, cloud_cover_data[i])
+                    except ValueError as e:
+                        LOGGER.error("Error parsing timestamp %s: %s", timestamp_str, e)
+        
+        # Créer un journal de débogage pour les ajustements
+        adjustment_log = {}
+        
+        # Ajuster les watts (puissance instantanée)
+        for timestamp, watts in list(estimate.watts.items()):
+            # Chercher la valeur de nébulosité pour ce timestamp spécifique
+            cloud_cover_percent = 0
+            
+            if cloud_cover_dict:
+                # Essayer de trouver le timestamp le plus proche
+                closest_timestamp = None
+                min_difference = timedelta(hours=24)  # Initialiser à une grande valeur
+                
+                # Convertir timestamp local en UTC si nécessaire pour la comparaison
+                utc_timestamp = timestamp
+                if timestamp.tzinfo:  # Si timestamp a une timezone
+                    utc_timestamp = timestamp.astimezone(timezone.utc).replace(tzinfo=None)
+                
+                for cloud_dt in cloud_cover_dict:
+                    # Calculer la différence en ignorant les secondes/microsecondes
+                    dt1 = utc_timestamp.replace(second=0, microsecond=0)
+                    dt2 = cloud_dt.replace(second=0, microsecond=0)
+                    difference = abs(dt1 - dt2)
+                    
+                    if difference < min_difference:
+                        min_difference = difference
+                        closest_timestamp = cloud_dt
+                
+                # Si on a trouvé un timestamp proche (moins de 2 heures de différence)
+                if closest_timestamp and min_difference <= timedelta(hours=2):
+                    cloud_cover_percent = cloud_cover_dict[closest_timestamp]
+                    # LOGGER.debug(
+                    #     "Matched timestamp %s with cloud data timestamp %s (diff: %s), cloud cover: %s%%",
+                    #     timestamp, closest_timestamp, min_difference, cloud_cover_percent
+                    # )
+                else:
+                    # Fallback à l'ancienne méthode basée sur l'heure du jour
+                    day_offset = (timestamp.date() - estimate.now().date()).days
+                    hour_index = timestamp.hour + (day_offset * 24)
+                    
+                    if 0 <= hour_index < len(cloud_cover_data):
+                        cloud_cover_percent = cloud_cover_data[hour_index]
+                        # LOGGER.debug(
+                        #     "Using fallback hour index method for %s: day_offset=%s, hour=%s, index=%s, cloud cover: %s%%", 
+                        #     timestamp, day_offset, timestamp.hour, hour_index, cloud_cover_percent
+                        # )
+            else:
+                # Fallback à l'ancienne méthode basée sur l'heure du jour comme dernier recours
+                day_offset = (timestamp.date() - estimate.now().date()).days
+                hour_index = timestamp.hour + (day_offset * 24)
+                
+                if 0 <= hour_index < len(cloud_cover_data):
+                    cloud_cover_percent = cloud_cover_data[hour_index]
+            
+
+            # Facteur d'ajustement: 100% de nébulosité = réduction de 70% (ajustable selon vos besoins)
+
+            cloud_correction_factor = self.config_entry.options.get(CONF_CLOUD_CORRECTION_FACTOR, DEFAULT_CLOUD_CORRECTION_FACTOR)
+            adjustment_factor = 1.0 - (cloud_cover_percent / 100.0 * cloud_correction_factor)
+            adjusted_watts = watts * adjustment_factor
+                 
+            # Appliquer l'ajustement
+            estimate.watts[timestamp] = adjusted_watts
+        
+        # Utiliser la même logique pour ajuster wh_period
+        for timestamp, wh in list(estimate.wh_period.items()):
+            # Même méthode d'alignement que pour watts
+            cloud_cover_percent = 0
+            
+            # [Répéter la même logique d'alignement que ci-dessus]
+            if cloud_cover_dict:
+                # Trouver le timestamp le plus proche...
+                # [code similaire à ci-dessus]
+                pass
+            else:
+                # Fallback
+                day_offset = (timestamp.date() - estimate.now().date()).days
+                hour_index = timestamp.hour + (day_offset * 24)
+                
+                if 0 <= hour_index < len(cloud_cover_data):
+                    cloud_cover_percent = cloud_cover_data[hour_index]
+            
+            adjustment_factor = 1.0 - (cloud_cover_percent / 100.0 * cloud_correction_factor)
+            estimate.wh_period[timestamp] = wh * adjustment_factor
+            
+            # Ajouter au compteur de totaux pour les statistiques
+            date_str = timestamp.date().isoformat()
+            if date_str in adjustment_log:
+                adjustment_log[date_str]["original_total"] += wh
+                adjustment_log[date_str]["adjusted_total"] += (wh * adjustment_factor)
+        
+        # Pour wh_days, calculer une moyenne journalière de nébulosité
+        date_cloud_cover = {}  # Stocke la couverture nuageuse moyenne par jour
+        
+        # Si nous avons des timestamps, calculer la moyenne par jour correctement
+        if cloud_timestamps:
+            for i, timestamp_str in enumerate(cloud_timestamps):
+                if i < len(cloud_cover_data):
+                    try:
+                        dt_str = timestamp_str.replace('T', ' ')
+                        cloud_dt = datetime.fromisoformat(dt_str)
+                        date_str = cloud_dt.date().isoformat()
+                        
+                        if date_str not in date_cloud_cover:
+                            date_cloud_cover[date_str] = {
+                                "total": cloud_cover_data[i],
+                                "count": 1
+                            }
+                        else:
+                            date_cloud_cover[date_str]["total"] += cloud_cover_data[i]
+                            date_cloud_cover[date_str]["count"] += 1
+                    except ValueError:
+                        pass
+        # Sinon, faire une estimation plus basique
+        else:
+            # Diviser les données de cloud_cover_data en tranches de 24h
+            for i in range(0, len(cloud_cover_data), 24):
+                day_slice = cloud_cover_data[i:i+24]
+                if day_slice:
+                    day_idx = i // 24
+                    today = estimate.now().date()
+                    date = today + timedelta(days=day_idx)
+                    date_cloud_cover[date.isoformat()] = {
+                        "total": sum(day_slice),
+                        "count": len(day_slice)
+                    }
+        
+        # Ajuster wh_days avec la nébulosité moyenne par jour
+        for day, wh in list(estimate.wh_days.items()):
+            date_str = day.isoformat()
+            if date_str in date_cloud_cover and date_cloud_cover[date_str]["count"] > 0:
+                avg_cloud_cover = date_cloud_cover[date_str]["total"] / date_cloud_cover[date_str]["count"]
+            else:
+                # Fallback
+                day_offset = (day - estimate.now().date()).days
+                start_idx = day_offset * 24
+                end_idx = start_idx + 24
+                day_slice = cloud_cover_data[start_idx:end_idx] if 0 <= start_idx < len(cloud_cover_data) else []
+                avg_cloud_cover = sum(day_slice) / len(day_slice) if day_slice else 0
+                
+            adjustment_factor = 1.0 - (avg_cloud_cover / 100.0 * 0.7)
+            estimate.wh_days[day] = wh * adjustment_factor
+            
+            # Enregistrer pour le débogage ( A garder)
+            LOGGER.debug(
+                "Day adjustment - %s: avg cloud cover: %.1f%%, original: %.1f, adjusted: %.1f", 
+                date_str, avg_cloud_cover, wh, (wh * adjustment_factor)
+            )
+        
+        # Calculer les statistiques d'ajustement
+        total_energy_after = sum(estimate.wh_period.values())
+        adjustment_pct = ((total_energy_after - total_energy_before) / total_energy_before * 100) if total_energy_before else 0
+        
+        # Stocker les statistiques et le log d'ajustement
+        self.adjustment_stats = {
+            "average_cloud_cover": sum(cloud_cover_data[:24])/min(24, len(cloud_cover_data)) if cloud_cover_data else 0,
+            "total_energy_before_adjustment": total_energy_before,
+            "total_energy_after_adjustment": total_energy_after,
+            "adjustment_percentage": adjustment_pct,
+            "daily_adjustments": adjustment_log
+        }
+
+
+
+
+    async def estimate(self) -> Estimate:
+        """Get solar production estimations from the API.
+
+        Returns
+        -------
+            A Estimate object, with a estimated production forecast.
+
+        """
+        w_avg: dict[dt, int] = defaultdict(int)
+        w_inst: dict[dt, int] = defaultdict(int)
+        wh_days: dict[dt, int] = defaultdict(int)
+
+        def gen_power(gti: float, t_amb: float, eff: float) -> int:
+            """Calculate the power generated by a solar panel.
+
+            Formulas:
+            ---------
+                According to https://www.mdpi.com/2071-1050/14/3/1500 (equations 1 and 2) and Table 1,
+                the temperature formula should be:
+                     Tc = Ta + G * k
+                where:
+                    - Tc is the cell temperature
+                    - Ta is the ambient temperature
+                    - G is the irradiance (W/m²)
+                    - k is the Ross coefficient
+
+                For a typical residential PV installation, we use the "Not so well cooled" Ross coefficient
+                from Table 1, which is 0.0342. (TODO: make this coefficient configurable.)
+
+                References:
+                    - Ross model source: https://www.researchgate.net/publication/275438802_Thermal_effects_of_the_extended_holographic_regions_for_holographic_planar_concentrator
+                    - Power output formula: P = Pmax * (G / Gstc) * (1 + α * (Tc - Tstc)) * ηDC (see p.509)
+                      Source: https://www.researchgate.net/publication/372240079_Solar_Prediction_Strategy_for_Managing_Virtual_Power_Stations
+            """
+            temp_cell = t_amb + gti * RossModelConstants.NOT_SO_WELL_COOLED
+            power = dc_wp
+            power *= gti / G_STC
+            power *= 1 + ALPHA_TEMP * (temp_cell - TEMP_STC_CELL)
+            power *= eff
+            return round(max(0, power))
+
+        def calculate_damping_coefficient(
+            time: dt,
+            sunrise: dt,
+            sunset: dt,
+            damping_morning: float,
+            damping_evening: float,
+        ) -> float:
+            """Calculate the damping coefficient for the current time.
+
+            Args:
+            ----
+                time: The current time.
+                sunrise: The time of sunrise.
+                sunset: The time of sunset.
+                damping_morning: The damping factor for the morning.
+                damping_evening: The damping factor for the evening.
+
+            Returns:
+            -------
+                The damping coefficient for the current time.
+
+            Notes:
+            -----
+                As the damping factor decreases, the power generated by the solar
+                panels increases. For example, when the damping factor is 0, the
+                power generated is at its maximum and no damping is applied. When
+                the damping factor is 1, the power generated is at its minimum and
+                the damping is fully applied.
+
+                This means that if a damping factor of 1.0 is applied for the morning,
+                at morning_start the power generated will be 0 as the coefficient would
+                be 0.0. As the time approaches morning_end, the coefficient will increase
+                linearly until it reaches 1.0 at morning_end. The same applies for the
+                evening, but the coefficient will decrease linearly from 1.0 to 0.0.
+
+            """
+            morning_start = sunrise
+            morning_end = sunrise + (sunset - sunrise) / 2
+            evening_start = morning_end
+            evening_end = sunset
+
+            def linear_damping(start: dt, end: dt, damping: float) -> float:
+                """Calculate the linear damping coefficient."""
+                duration = end - start
+                elapsed = time - start
+                damping = 1.0 - damping  # Invert the damping factor
+                return (elapsed / duration) * (1.0 - damping) + damping
+
+            if morning_start <= time <= morning_end:
+                return linear_damping(morning_start, morning_end, damping_morning)
+
+            if evening_start <= time <= evening_end:
+                return linear_damping(evening_end, evening_start, damping_evening)
+
+            return 1
+
+        utc_offset = None
+        for (
+            azimuth,
+            declination,
+            dc_kwp,
+            latitude,
+            lonitude,
+            efficiency,
+            damping_morning,
+            damping_evening,
+        ) in zip(
+            self.azimuth,
+            self.declination,
+            self.dc_kwp,
+            self.latitude,
+            self.longitude,
+            self.efficiency_factor,
+            self.damping_morning,
+            self.damping_evening,
+            strict=True,
+        ):
+            params = {
+                "latitude": str(latitude),
+                "longitude": str(lonitude),
+                "azimuth": str(azimuth),
+                "tilt": str(declination),
+                "minutely_15": "temperature_2m"
+                ",global_tilted_irradiance,global_tilted_irradiance_instant",
+                "daily": "sunrise,sunset",
+                "forecast_days": str(self.forecast_days),
+                "past_days": str(self.past_days),
+                "timezone": "auto",
+            }
+            data = await self._request(
+                "/v1/forecast",
+                params=params,
+            )
+            gti_avg_arr = data["minutely_15"]["global_tilted_irradiance"]
+            gti_inst_arr = data["minutely_15"]["global_tilted_irradiance_instant"]
+            temp_arr = data["minutely_15"]["temperature_2m"]
+            if utc_offset is None:
+                utc_offset = data["utc_offset_seconds"]
+            elif utc_offset != data["utc_offset_seconds"]:
+                raise OpenMeteoSolarForecastConfigError(
+                    "The UTC offset is not the same for all locations"
+                )
+            time_arr = [
+                dt.strptime(time, "%Y-%m-%dT%H:%M").replace(
+                    tzinfo=timezone(timedelta(seconds=utc_offset))
+                )
+                for time in data["minutely_15"]["time"]
+            ]
+            sunrise_dict = {
+                dt.strptime(time, "%Y-%m-%dT%H:%M")
+                .replace(tzinfo=timezone(timedelta(seconds=utc_offset)))
+                .date(): dt.strptime(time, "%Y-%m-%dT%H:%M")
+                .replace(tzinfo=timezone(timedelta(seconds=utc_offset)))
+                for time in data["daily"]["sunrise"]
+            }
+            sunset_dict = {
+                dt.strptime(time, "%Y-%m-%dT%H:%M")
+                .replace(tzinfo=timezone(timedelta(seconds=utc_offset)))
+                .date(): dt.strptime(time, "%Y-%m-%dT%H:%M")
+                .replace(tzinfo=timezone(timedelta(seconds=utc_offset)))
+                for time in data["daily"]["sunset"]
+            }
+            damping_factors = [
+                calculate_damping_coefficient(
+                    time,
+                    sunrise_dict[time.date()],
+                    sunset_dict[time.date()],
+                    damping_morning,
+                    damping_evening,
+                )
+                for time in time_arr
+            ]
+
+            # Convert kW to W
+            dc_wp = dc_kwp * 1000
+
+            for i, time in enumerate(time_arr):
+                # Skip the first element as we need the previous element to calculate
+                # the average temperature for the current time
+                if i - 1 < 0:
+                    continue
+
+                # Skip if any of the values are None
+                if None in (
+                    gti_avg_arr[i],
+                    gti_inst_arr[i],
+                    *temp_arr[i - 1 : i + 1],
+                ):
+                    continue
+
+                # Get the GTI for average and instantaneous values
+                g_avg = gti_avg_arr[i]
+                g_inst = gti_inst_arr[i]
+
+                # Get the temperature for average and instantaneous values
+                temp_avg = (temp_arr[i] + temp_arr[i - 1]) / 2
+                temp_inst = temp_arr[i - 1]
+
+                # For minutely data, the GTI start time is 15 minutes before the time
+                # even for instant data (since the data is averaged over 15 minutes)
+                time_start = time - timedelta(minutes=15)
+
+                # Add the damping factor to the efficiency
+                eff_damped = efficiency * damping_factors[i]
+
+                # Calculate and store the power generated
+                w_avg[time_start] += gen_power(g_avg, temp_avg, eff_damped)
+                w_inst[time_start] += gen_power(g_inst, temp_inst, eff_damped)
+
+        # Clamp the power generated to the AC power
+        ac_wp = self.ac_kwp * 1000  # Convert kW to W
+        for time in w_avg:
+            w_avg[time] = min(w_avg[time], ac_wp)
+        for time in w_inst:
+            w_inst[time] = min(w_inst[time], ac_wp)
+
+        # Calculate the average power generated per hour
+        wh_period: dict[dt, int] = {}
+        wh_period_count: dict[dt, int] = {}
+        for time, power in w_avg.items():
+            hour = time.replace(minute=0, second=0, microsecond=0)
+            wh_period[hour] = wh_period.get(hour, 0) + power
+            wh_period_count[hour] = wh_period_count.get(hour, 0) + 1
+        for time in wh_period:
+            wh_period[time] /= wh_period_count[time]
+
+        # Calculate the total energy produced per day
+        for time, power in wh_period.items():
+            day = time.date()
+            wh_days[day] = wh_days.get(day, 0) + power
+
+        # Return the estimate object
+        estimate = Estimate(
+            watts=w_inst,
+            wh_period=wh_period,
+            wh_days=wh_days,
+            api_timezone=timezone(timedelta(seconds=utc_offset)),
+        )
+        
+        cloud_cover_data = await self._fetch_hourly_cloud_cover()
+        self._adjust_estimate_with_cloud_cover(estimate, cloud_cover_data)
+        
+        return estimate
+
+    async def close(self) -> None:
+        """Close open client session."""
+        if self.session and self._close_session:
+            await self.session.close()
+
+    async def __aenter__(self) -> Self:
+        """Async enter.
+
+        Returns
+        -------
+            The OpenMeteoSolarForecast object.
+
+        """
+        return self
+
+    async def __aexit__(self, *_exc_info: object) -> None:
+        """Async exit.
+
+        Args:
+        ----
+            _exc_info: Exec type.
+
+        """
+        await self.close()
+
+
+---
+# custom_components/ha_sunforecast_plus/recorder.py
+---
+
+"""Integration platform for recorder."""
+
+from __future__ import annotations
+
+from homeassistant.core import HomeAssistant, callback
+
+from .const import ATTR_WATTS, ATTR_WH_PERIOD
+
+
+@callback
+def exclude_attributes(hass: HomeAssistant) -> set[str]:
+    """Exclude potentially large attributes from being recorded in the database."""
+    return {ATTR_WATTS, ATTR_WH_PERIOD}
+
+
+---
+# custom_components/ha_sunforecast_plus/sensor.py
+---
+
+"""Support for Sun Forecast Plus sensor service."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any
+
+from homeassistant.components.sensor import (
+    DOMAIN as SENSOR_DOMAIN,
+)
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfEnergy, UnitOfPower
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_utc_time_change
+from homeassistant.helpers.typing import StateType
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .estimate import Estimate
+
+from .const import ATTR_WATTS, ATTR_WH_PERIOD, DOMAIN
+from .coordinator import OpenMeteoSolarForecastDataUpdateCoordinator
+
+
+
+
+
+@dataclass(frozen=True)
+class OpenMeteoSolarForecastSensorEntityDescription(SensorEntityDescription):
+    """Describes a Forecast.Solar Sensor."""
+
+    state: Callable[[Estimate], Any] | None = None
+
+
+SENSORS: tuple[OpenMeteoSolarForecastSensorEntityDescription, ...] = (
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_production_today",
+        translation_key="energy_production_today",
+        state=lambda estimate: estimate.energy_production_today,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_production_today_remaining",
+        translation_key="energy_production_today_remaining",
+        state=lambda estimate: estimate.energy_production_today_remaining,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_production_tomorrow",
+        translation_key="energy_production_tomorrow",
+        state=lambda estimate: estimate.energy_production_tomorrow,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_production_d2",
+        translation_key="energy_production_d2",
+        state=lambda estimate: estimate.day_production(
+            estimate.now().date() + timedelta(days=2)
+        ),
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_production_d3",
+        translation_key="energy_production_d3",
+        state=lambda estimate: estimate.day_production(
+            estimate.now().date() + timedelta(days=3)
+        ),
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_production_d4",
+        translation_key="energy_production_d4",
+        state=lambda estimate: estimate.day_production(
+            estimate.now().date() + timedelta(days=4)
+        ),
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_production_d5",
+        translation_key="energy_production_d5",
+        state=lambda estimate: estimate.day_production(
+            estimate.now().date() + timedelta(days=5)
+        ),
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_production_d6",
+        translation_key="energy_production_d6",
+        state=lambda estimate: estimate.day_production(
+            estimate.now().date() + timedelta(days=6)
+        ),
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_production_d7",
+        translation_key="energy_production_d7",
+        state=lambda estimate: estimate.day_production(
+            estimate.now().date() + timedelta(days=7)
+        ),
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="power_highest_peak_time_today",
+        translation_key="power_highest_peak_time_today",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="power_highest_peak_time_tomorrow",
+        translation_key="power_highest_peak_time_tomorrow",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="power_production_now",
+        translation_key="power_production_now",
+        device_class=SensorDeviceClass.POWER,
+        state=lambda estimate: estimate.power_production_now,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="power_production_next_15minutes",
+        translation_key="power_production_next_15minutes",
+        state=lambda estimate: estimate.power_production_at_time(
+            estimate.now() + timedelta(minutes=15)
+        ),
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False,
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="power_production_next_30minutes",
+        translation_key="power_production_next_30minutes",
+        state=lambda estimate: estimate.power_production_at_time(
+            estimate.now() + timedelta(minutes=30)
+        ),
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False,
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="power_production_next_hour",
+        translation_key="power_production_next_hour",
+        state=lambda estimate: estimate.power_production_at_time(
+            estimate.now() + timedelta(hours=1)
+        ),
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False,
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="power_production_next_12hours",
+        translation_key="power_production_next_12hours",
+        state=lambda estimate: estimate.power_production_at_time(
+            estimate.now() + timedelta(hours=12)
+        ),
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False,
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="power_production_next_24hours",
+        translation_key="power_production_next_24hours",
+        state=lambda estimate: estimate.power_production_at_time(
+            estimate.now() + timedelta(hours=24)
+        ),
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False,
+        native_unit_of_measurement=UnitOfPower.WATT,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_current_hour",
+        translation_key="energy_current_hour",
+        state=lambda estimate: estimate.energy_current_hour,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+    OpenMeteoSolarForecastSensorEntityDescription(
+        key="energy_next_hour",
+        translation_key="energy_next_hour",
+        state=lambda estimate: estimate.sum_energy_production(1),
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=1,
+    ),
+)
+
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
+    """Defer sensor setup to the shared sensor module."""
+    coordinator: OpenMeteoSolarForecastDataUpdateCoordinator = hass.data[DOMAIN][
+        entry.entry_id
+    ]
+    entities = []
+    
+    # Ajouter tous les capteurs standard
+    for entity_description in SENSORS:
+        entities.append(
+            OpenMeteoSolarForecastSensorEntity(
+                entry_id=entry.entry_id,
+                coordinator=coordinator,
+                entity_description=entity_description,
+            )
+        )
+        
+    async_add_entities(entities)
+
+class OpenMeteoSolarForecastSensorEntity(
+    CoordinatorEntity[OpenMeteoSolarForecastDataUpdateCoordinator], SensorEntity
+):
+    """Defines a Open-Meteo sensor."""
+    entity_description: OpenMeteoSolarForecastSensorEntityDescription
+    _attr_has_entity_name = True
+    def __init__(
+        self,
+        *,
+        entry_id: str,
+        coordinator: OpenMeteoSolarForecastDataUpdateCoordinator,
+        entity_description: OpenMeteoSolarForecastSensorEntityDescription,
+    ) -> None:
+        """Initialize Open-Meteo Solar sensor."""
+        super().__init__(coordinator=coordinator)
+        self.entity_description = entity_description
+        #self.entity_id = f"{SENSOR_DOMAIN}.{entity_description.key}"
+        self._attr_unique_id = f"{entry_id}_{entity_description.key}"
+        self._attr_device_info = DeviceInfo(
+            entry_type=DeviceEntryType.SERVICE,
+            identifiers={(DOMAIN, entry_id)},
+            manufacturer="Open-Meteo",
+            name="Solar production forecast",
+            configuration_url="https://open-meteo.com",
+        )
+    async def _update_callback(self, now: datetime) -> None:
+        """Update the entity without fetching data from server.
+        This is required for the power_production_* sensors to update
+        as they take data in 15-minute intervals and the update interval
+        is 30 minutes."""
+        self.async_write_ha_state()
+
+
+    async def async_added_to_hass(self) -> None:
+        """Register callbacks."""
+        await super().async_added_to_hass()
+        # Update the state of the sensor every minute without
+        # fetching new data from the server.
+        if "power_production_next_" in self.entity_description.key:
+            async_track_utc_time_change(
+                self.hass,
+                self._update_callback,
+                minute=[0, 15, 30, 45],
+                second=0,
+        )
+    @property
+    def native_value(self) -> datetime | StateType:
+        """Return the state of the sensor."""
+        if self.entity_description.state is None:
+            state: StateType | datetime = getattr(
+                self.coordinator.data, self.entity_description.key
+            )
+        else:
+            state = self.entity_description.state(self.coordinator.data)
+        return state
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return the state attributes."""
+        attrs = None
+        
+        if self.entity_description.key.startswith(
+            "energy_production_d"
+        ) or self.entity_description.key in (
+            "energy_production_today",
+            "energy_production_tomorrow",
+        ):
+            target_date = self.coordinator.data.now().date()
+            if self.entity_description.key == "energy_production_tomorrow":
+                target_date += timedelta(days=1)
+            elif self.entity_description.key.startswith("energy_production_d"):
+                target_date += timedelta(
+                    days=int(self.entity_description.key[len("energy_production_d") :])
+                )
+            elif self.entity_description.key == "energy_production_today":
+                pass  # target_date is already set to today
+            else:
+                raise ValueError(
+                    f"Unexpected key {self.entity_description.key} for extra_state_attributes"
+                )
+            attrs = {
+                ATTR_WATTS: {
+                    watt_datetime.isoformat(): watt_value
+                    for watt_datetime, watt_value in self.coordinator.data.watts.items()
+                    if watt_datetime.date() == target_date
+                },
+                ATTR_WH_PERIOD: {
+                    wh_datetime.isoformat(): wh_value
+                    for wh_datetime, wh_value in self.coordinator.data.wh_period.items()
+                    if wh_datetime.date() == target_date
+                },
+            }
+        else:
+            attrs = {}
+            
+        # Ajouter les informations d'ajustement de nébulosité seulement pour les capteurs d'énergie
+        if hasattr(self.coordinator, "adjustment_stats") and self.entity_description.key.startswith("energy_"):
+            cloud_info = {
+                "average_cloud_cover": f"{self.coordinator.adjustment_stats.get('average_cloud_cover', 0):.1f}%",
+                "adjustment": f"{self.coordinator.adjustment_stats.get('adjustment_percentage', 0):.1f}%"
+            }
+            
+            if not attrs:
+                attrs = {}
+                
+            attrs["cloud_adjustment"] = cloud_info
+            
+        return attrs
+        
+
+---
+# custom_components/ha_sunforecast_plus/strings.json
+---
+
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Fill in the data of your solar panels.",
+        "data": {
+          "api_key": "[%key:common::config_flow::data::api_key%]",
+          "azimuth": "Azimuth (360 degrees, 0 = North, 90 = East, 180 = South, 270 = West)",
+          "damping_morning": "Damping factor: adjusts the results in the morning",
+          "damping_evening": "Damping factor: adjusts the results in the evening",
+          "declination": "Declination (0 = Horizontal, 90 = Vertical)",
+          "latitude": "[%key:common::config_flow::data::latitude%]",
+          "longitude": "[%key:common::config_flow::data::longitude%]",
+          "efficiency_factor": "DC efficiency factor (0.0-1.0, 0.0 = 100% loss, 1.0 = no loss)",
+          "modules_power": "Total Watt peak power of your solar modules",
+          "inverter_power": "The capacity of your inverter in Watt",
+          "name": "[%key:common::config_flow::data::name%]",
+          "model": "The weather model to use",
+          "cloud_model": "The cloud_cover model to use",
+          "cloud_correction_factor":"Damping factor for cloud covering"
+        }
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_api_key": "[%key:common::config_flow::error::invalid_api_key%]"
+    },
+    "step": {
+      "init": {
+        "description": "[%key:component::solar_forecast::config::step::user::description%]",
+        "data": {
+          "api_key": "[%key:common::config_flow::data::api_key%]",
+          "azimuth": "[%key:component::solar_forecast::config::step::user::data::azimuth%]",
+          "damping_morning": "[%key:component::solar_forecast::config::step::user::data::damping_morning%]",
+          "damping_evening": "[%key:component::solar_forecast::config::step::user::data::damping_evening%]",
+          "declination": "[%key:component::solar_forecast::config::step::user::data::declination%]",
+          "efficiency_factor": "[%key:component::solar_forecast::config::step::user::data::efficiency_factor%]",
+          "modules_power": "[%key:component::solar_forecast::config::step::user::data::modules_power%]",
+          "inverter_power": "[%key:component::solar_forecast::config::step::user::data::inverter_power%]",
+          "model": "[%key:component::solar_forecast::config::step::user::data::model%]",
+          "cloud_model": "The cloud_cover model to use",
+          "cloud_correction_factor":"Damping factor for cloud covering"
+
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "energy_production_today": {
+        "name": "Estimated energy production - today"
+      },
+      "energy_production_today_remaining": {
+        "name": "Estimated energy production - remaining today"
+      },
+      "energy_production_tomorrow": {
+        "name": "Estimated energy production - tomorrow"
+      },
+      "energy_production_d2": {
+        "name": "Estimated energy production - day after tomorrow"
+      },
+      "energy_production_d3": {
+        "name": "Estimated energy production - 3 days from now"
+      },
+      "energy_production_d4": {
+        "name": "Estimated energy production - 4 days from now"
+      },
+      "energy_production_d5": {
+        "name": "Estimated energy production - 5 days from now"
+      },
+      "energy_production_d6": {
+        "name": "Estimated energy production - 6 days from now"
+      },
+      "energy_production_d7": {
+        "name": "Estimated energy production - 7 days from now"
+      },
+      "power_highest_peak_time_today": {
+        "name": "Highest power peak time - today"
+      },
+      "power_highest_peak_time_tomorrow": {
+        "name": "Highest power peak time - tomorrow"
+      },
+      "power_production_now": {
+        "name": "Estimated power production - now"
+      },
+      "power_production_next_15minutes": {
+        "name": "Estimated power production - next 15 minutes"
+      },
+      "power_production_next_30minutes": {
+        "name": "Estimated power production - next 30 minutes"
+      },
+      "power_production_next_hour": {
+        "name": "Estimated power production - next hour"
+      },
+      "power_production_next_12hours": {
+        "name": "Estimated power production - next 12 hours"
+      },
+      "power_production_next_24hours": {
+        "name": "Estimated power production - next 24 hours"
+      },
+      "energy_current_hour": {
+        "name": "Estimated energy production - this hour"
+      },
+      "energy_next_hour": {
+        "name": "Estimated energy production - next hour"
+      }
+    }
+  }
+}
+
+
+---
+# Estimation du nombre de tokens : 21509 tokens
