@@ -43,11 +43,11 @@ To use this integration in your installation, head to "Settings" in the Home Ass
 
 Configuration part 1:
 
-![Capture1](https://i.imgur.com/1PmFjbG.png)
+![Capture1](https://i.imgur.com/vUW141X.png)
 
 Configuration part 2:
 
-![Capture2](https://i.imgur.com/l6ZtTup.png)
+![Capture2](https://i.imgur.com/C8Pgflj.png)
 
 
 **Tip**
