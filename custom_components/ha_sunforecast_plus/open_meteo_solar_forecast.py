@@ -27,11 +27,22 @@ from .models import Estimate
 from homeassistant.config_entries import ConfigEntry
 
 from .const import (
-
+    CONF_AZIMUTH,
+    CONF_BASE_URL,
+    CONF_DAMPING_EVENING,
+    CONF_DAMPING_MORNING,
+    CONF_DECLINATION,
+    CONF_EFFICIENCY_FACTOR,
+    CONF_INVERTER_POWER,
+    CONF_MODULES_POWER,
+    CONF_MODEL,
+    CONF_CLOUD_MODEL,
     CONF_CLOUD_CORRECTION_FACTOR,
     DEFAULT_CLOUD_CORRECTION_FACTOR,
+    DOMAIN,
     LOGGER,
 )
+from .exceptions import OpenMeteoSolarForecastUpdateFailed
 
 
 
@@ -202,9 +213,10 @@ class OpenMeteoSolarForecast:
             # Cette méthode est similaire à celle dans coordinator.py
             latitude = str(self.latitude[0])  # Utilisation du premier élément de la liste
             longitude = str(self.longitude[0])  # Utilisation du premier élément de la liste
-            cloud_cover_model = self.weather_model  # Utilisation de weather_model
-            LOGGER.debug("Fetching cloud cover data for latitude: %s, longitude: %s", latitude, longitude)
+            cloud_cover_model =self.config_entry.options.get(CONF_CLOUD_MODEL,"best_match")
             
+             # Utilisation de weather_model
+            LOGGER.debug("Fetching cloud cover data for latitude: %s, longitude: %s", latitude, longitude)
             url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&hourly=cloud_cover&timeformat=iso8601&timezone=auto&models={cloud_cover_model}&forecast_days=7"
             LOGGER.debug("Fetching cloud cover data from URL: %s", url)
             
@@ -220,7 +232,7 @@ class OpenMeteoSolarForecast:
             
     async def _adjust_estimate_with_cloud_cover(self, estimate: Estimate, cloud_cover_data: list) -> None:
         """Ajuster l'estimation solaire en fonction des données de nébulosité."""
-
+        cloud_cover_model =self.config_entry.options.get(CONF_CLOUD_MODEL,"best_match")
         LOGGER.debug("Starting adjustment of solar estimate using cloud cover data")
 
         # Logique de correction, similaire à celle dans coordinator.py mais adaptée
@@ -231,8 +243,18 @@ class OpenMeteoSolarForecast:
         # Récupérer la liste des timestamps des données de nébulosité depuis l'API
         cloud_timestamps = []
         try:
-            hourly_params = "cloudcover"  # ou autre variable valide demandée
-            url = f"https://api.open-meteo.com/v1/forecast?latitude={self.latitude[0]}&longitude={self.longitude[0]}&hourly={hourly_params}&timeformat=iso8601&timezone=auto&models={self.weather_model}&forecast_days=7"
+            hourly_params = "cloudcover"  # Doit être une variable supportée par Open-Meteo
+            url = (
+                f"https://api.open-meteo.com/v1/forecast"
+                f"?latitude={self.latitude[0]}"
+                f"&longitude={self.longitude[0]}"
+                f"&hourly={hourly_params}"
+                f"&timeformat=iso8601"
+                f"&timezone=auto"
+                f"&models={cloud_cover_model}"
+                f"&forecast_days=7"
+            )
+            LOGGER.debug("Generated Open-Meteo URL: %s", url)
             
             async with self.session.get(url) as response:
                 if response.status != 200:
