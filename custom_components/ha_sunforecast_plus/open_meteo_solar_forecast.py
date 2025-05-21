@@ -232,7 +232,7 @@ class OpenMeteoSolarForecast:
             
     async def _adjust_estimate_with_cloud_cover(self, estimate: Estimate, cloud_cover_data: list) -> None:
         """Ajuster l'estimation solaire en fonction des données de nébulosité."""
-        weather_model =self.config_entry.options.get(CONF_MODEL,"best_match")
+        cloud_cover_model =self.config_entry.options.get(CONF_CLOUD_MODEL,"best_match")
         LOGGER.debug("Starting adjustment of solar estimate using cloud cover data")
 
         # Logique de correction, similaire à celle dans coordinator.py mais adaptée
@@ -251,7 +251,7 @@ class OpenMeteoSolarForecast:
                 f"&hourly={hourly_params}"
                 f"&timeformat=iso8601"
                 f"&timezone=auto"
-                f"&models={weather_model}"
+                f"&models={cloud_cover_model}"
                 f"&forecast_days=7"
             )
             LOGGER.debug("Generated Open-Meteo URL: %s", url)
