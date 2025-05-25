@@ -218,7 +218,7 @@ SENSORS: tuple[OpenMeteoSolarForecastSensorEntityDescription, ...] = (
     OpenMeteoSolarForecastSensorEntityDescription(
         key="sunforecast_logs",
         translation_key="sunforecast_logs",
-        device_class=SensorDeviceClass.NONE,
+       #device_class=SensorDeviceClass.NONE,
         state=None,
     ),
 )
