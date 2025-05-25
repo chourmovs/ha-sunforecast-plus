@@ -230,14 +230,17 @@ class LogSensorEntity(SensorEntity):
     def __init__(self, hass: HomeAssistant, entry_id: str):
         self.hass = hass
         self._entry_id = entry_id
-        self._attr_unique_id = f"sunforecast_logs_{entry_id}_custom"  # ✅ Ajout de "_custom" pour l'unicité
+        self._attr_unique_id = f"sunforecast_logs_{entry_id}_custom"
         self._state = "No data available"
         self._last_update = datetime.now()
 
     @property
     def native_value(self) -> str:
-        """Retourne la valeur actuelle du capteur."""
-        return self._state
+        """Return the state of the sensor (truncated to 250 characters)."""
+        return self._state[:250]  # ✅ Truncate to 250 characters
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        return {"full_log": self._state}
 
     async def async_update(self) -> None:
         """Méthode pour mettre à jour le capteur en lisant le log de manière asynchrone."""
@@ -247,7 +250,6 @@ class LogSensorEntity(SensorEntity):
                 self._state = f"Log file not found: {log_path}"
                 return
 
-            # Utilisez asyncio.to_thread pour exécuter l'opération en arrière-plan
             with await asyncio.to_thread(open, log_path, "r") as f:
                 lines = f.readlines()
 
