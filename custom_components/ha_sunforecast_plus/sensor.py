@@ -216,12 +216,8 @@ SENSORS: tuple[OpenMeteoSolarForecastSensorEntityDescription, ...] = (
     ),
 )
 
-
 class LogSensorEntity(SensorEntity):
-    """Capteur personnalisé pour lire les lignes de log contenant 'Day adjustment'."""
-
     _attr_has_entity_name = True
-    _attr_unique_id = f"sunforecast_logs_{entry_id}"
     _attr_name = "HA Sunforecast Logs"
     _attr_device_info = DeviceInfo(
         entry_type=DeviceEntryType.SERVICE,
@@ -232,9 +228,10 @@ class LogSensorEntity(SensorEntity):
     )
 
     def __init__(self, hass: HomeAssistant, entry_id: str):
+        """Initialisation du capteur."""
         self.hass = hass
         self._entry_id = entry_id
-        self._attr_unique_id = f"sunforecast_logs_{entry_id}"
+        self._attr_unique_id = f"sunforecast_logs_{entry_id}"  # ✅ Utilisez `entry_id` correctement
         self._state = "No data available"
         self._last_update = datetime.now()
 
