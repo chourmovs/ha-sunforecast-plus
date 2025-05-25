@@ -214,13 +214,6 @@ SENSORS: tuple[OpenMeteoSolarForecastSensorEntityDescription, ...] = (
         suggested_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         suggested_display_precision=1,
     ),
-    # Capteur personnalisé pour les logs
-    OpenMeteoSolarForecastSensorEntityDescription(
-        key="sunforecast_logs",
-        translation_key="sunforecast_logs",
-       #device_class=SensorDeviceClass.NONE,
-        state=None,
-    ),
 )
 
 
@@ -228,7 +221,7 @@ class LogSensorEntity(SensorEntity):
     """Capteur personnalisé pour lire les lignes de log contenant 'Day adjustment'."""
 
     _attr_has_entity_name = True
-    _attr_unique_id = "sunforecast_logs"
+    _attr_unique_id = f"sunforecast_logs_{entry_id}"
     _attr_name = "HA Sunforecast Logs"
     _attr_device_info = DeviceInfo(
         entry_type=DeviceEntryType.SERVICE,
@@ -238,9 +231,10 @@ class LogSensorEntity(SensorEntity):
         configuration_url="https://open-meteo.com",
     )
 
-    def __init__(self, hass: HomeAssistant):
-        """Initialisation du capteur."""
+    def __init__(self, hass: HomeAssistant, entry_id: str):
         self.hass = hass
+        self._entry_id = entry_id
+        self._attr_unique_id = f"sunforecast_logs_{entry_id}"
         self._state = "No data available"
         self._last_update = datetime.now()
 
@@ -280,18 +274,8 @@ async def async_setup_entry(
     ]
     entities = []
 
-    # Ajouter tous les capteurs standard
-    for entity_description in SENSORS:
-        entities.append(
-            OpenMeteoSolarForecastSensorEntity(
-                entry_id=entry.entry_id,
-                coordinator=coordinator,
-                entity_description=entity_description,
-            )
-        )
-
-    # Ajouter le capteur personnalisé pour les logs
-    log_sensor = LogSensorEntity(hass)
+   # Ajouter le capteur personnalisé pour les logs
+    log_sensor = LogSensorEntity(hass, entry_id=entry.entry_id)
     entities.append(log_sensor)
 
     # Planifier la mise à jour du capteur de log toutes les 5 minutes
