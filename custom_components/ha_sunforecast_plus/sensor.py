@@ -271,6 +271,16 @@ async def async_setup_entry(
     ]
     entities = []
 
+    #Ajouter les capteurs standards
+    for entity_description in SENSORS:
+        entities.append(
+            OpenMeteoSolarForecastSensorEntity(
+                entry_id=entry.entry_id,
+                coordinator=coordinator,
+                entity_description=entity_description,
+            )
+        )
+
    # Ajouter le capteur personnalisé pour les logs
     log_sensor = LogSensorEntity(hass, entry_id=entry.entry_id)
     entities.append(log_sensor)
