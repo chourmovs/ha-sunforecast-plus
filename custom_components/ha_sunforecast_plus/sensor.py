@@ -228,10 +228,9 @@ class LogSensorEntity(SensorEntity):
     )
 
     def __init__(self, hass: HomeAssistant, entry_id: str):
-        """Initialisation du capteur."""
         self.hass = hass
         self._entry_id = entry_id
-        self._attr_unique_id = f"sunforecast_logs_{entry_id}"  # ✅ Utilisez `entry_id` correctement
+        self._attr_unique_id = f"sunforecast_logs_{entry_id}_custom"  # ✅ Ajout de "_custom" pour l'unicité
         self._state = "No data available"
         self._last_update = datetime.now()
 
@@ -241,14 +240,15 @@ class LogSensorEntity(SensorEntity):
         return self._state
 
     async def async_update(self) -> None:
-        """Méthode pour mettre à jour le capteur en lisant le log."""
+        """Méthode pour mettre à jour le capteur en lisant le log de manière asynchrone."""
         try:
             log_path = "/config/home-assistant.log"
             if not os.path.exists(log_path):
                 self._state = f"Log file not found: {log_path}"
                 return
 
-            with open(log_path, "r") as f:
+            # Utilisez asyncio.to_thread pour exécuter l'opération en arrière-plan
+            with await asyncio.to_thread(open, log_path, "r") as f:
                 lines = f.readlines()
 
             # Filtrer les lignes contenant 'Day adjustment'
