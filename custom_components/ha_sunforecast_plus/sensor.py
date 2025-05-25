@@ -240,7 +240,12 @@ class LogSensorEntity(SensorEntity):
         return self._state[:250]  # ✅ Truncate to 250 characters
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        return {"full_log": self._state}
+        """Return only the last 5 lines with 'Day adjustment' in a list format."""
+        lines = []
+        for line in self._state.splitlines():
+            if "Day adjustment" in line:
+                lines.append(line)
+        return {"log_lines": lines[-5:]}  # Keep only the last 5 lines
 
     async def async_update(self) -> None:
         """Méthode pour mettre à jour le capteur en lisant le log de manière asynchrone."""
