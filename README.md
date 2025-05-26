@@ -64,6 +64,7 @@ logger:
 **Optional: Display Logs in your dashboard using Lovelace Card**
 
 You can display recent adjustment logs using a markdown card in your dashboard. Here's an example:
+(after having activated specific log as above)
 
 ```yaml
   type: markdown
