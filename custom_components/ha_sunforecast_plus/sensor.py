@@ -245,7 +245,7 @@ class LogSensorEntity(SensorEntity):
         for line in self._state.splitlines():
             if "Day adjustment" in line:
                 lines.append(line)
-        return {"log_lines": lines[-5:]}  # Keep only the last 5 lines
+        return {"log_lines": lines[-6:][:3]}  # Last 6 lines, then first 3 of those
 
     async def async_update(self) -> None:
         """Méthode pour mettre à jour le capteur en lisant le log de manière asynchrone."""
