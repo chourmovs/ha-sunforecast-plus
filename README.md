@@ -51,7 +51,7 @@ Configuration part 2:
 
 
 **Tip**
-To see the cloud-cover correction in action, activate the specific log in your configurationb.yaml
+To see the cloud-cover correction in action, activate the specific log in your configuration.yaml
 ```
 logger:
   default: info
@@ -62,6 +62,7 @@ logger:
 ![Capture3](https://i.imgur.com/aJ0IIPw.png)
 
 **Optional: Display Logs in your dashboard using Lovelace Card**
+
 You can display recent adjustment logs using a markdown card in your dashboard. Here's an example:
 
 ```yaml
