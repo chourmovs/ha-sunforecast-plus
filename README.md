@@ -61,7 +61,23 @@ logger:
 ```
 ![Capture3](https://i.imgur.com/aJ0IIPw.png)
 
+**Optional: Display Logs in your dashboard using Lovelace Card**
+You can display recent adjustment logs using a markdown card in your dashboard. Here's an example:
 
+```yaml
+  type: markdown
+  title: Logs ha_sunforecast_plus
+  content: >
+    ```text
+    {% set log_lines = state_attr('sensor.solar_production_forecast_ha_sunforecast_logs', 'log_lines') %}
+    {% if log_lines %}
+      {% for line in log_lines %}
+        {{ line.split("Day adjustment -")[1] }}
+      {% endfor %}
+    {% else %}
+      No logs available.
+    {% endif %}
+```
 ## Common Mistakes
 
 ### API Key
@@ -110,3 +126,8 @@ This project was initially a fork of [rany2/ha-open-meteo-solar-forecast](https:
 
 The [forecast_solar component code](https://github.com/home-assistant/core/tree/dev/homeassistant/components/forecast_solar) was used as a base for this integration. Thanks for such a clean starting point!
 
+## ☕ Support this project
+
+If you find this integration useful and want to support its development, consider [buying me a coffee](https://www.buymeacoffee.com/chourmovs):
+
+[![Buy Me a Coffee](https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=chourmovs&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/chourmovs)
