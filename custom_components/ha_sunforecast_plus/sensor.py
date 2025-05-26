@@ -1,12 +1,9 @@
 """Support for Sun Forecast Plus sensor service."""
-
 from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
-
 from homeassistant.components.sensor import (
     DOMAIN as SENSOR_DOMAIN,
 )
@@ -24,20 +21,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_utc_time_change
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
 from .estimate import Estimate
-
 from .const import ATTR_WATTS, ATTR_WH_PERIOD, DOMAIN
 from .coordinator import OpenMeteoSolarForecastDataUpdateCoordinator
-
-
-
+import os
+import asyncio
 
 
 @dataclass(frozen=True)
 class OpenMeteoSolarForecastSensorEntityDescription(SensorEntityDescription):
     """Describes a Forecast.Solar Sensor."""
-
     state: Callable[[Estimate], Any] | None = None
 
 
@@ -223,6 +216,59 @@ SENSORS: tuple[OpenMeteoSolarForecastSensorEntityDescription, ...] = (
     ),
 )
 
+class LogSensorEntity(SensorEntity):
+    _attr_has_entity_name = True
+    _attr_name = "HA Sunforecast Logs"
+    _attr_device_info = DeviceInfo(
+        entry_type=DeviceEntryType.SERVICE,
+        identifiers={(DOMAIN, "sunforecast_logs")},
+        manufacturer="Open-Meteo",
+        name="Solar production forecast",
+        configuration_url="https://open-meteo.com",
+    )
+
+    def __init__(self, hass: HomeAssistant, entry_id: str):
+        self.hass = hass
+        self._entry_id = entry_id
+        self._attr_unique_id = f"sunforecast_logs_{entry_id}_custom"
+        self._state = "No data available"
+        self._last_update = datetime.now()
+
+    @property
+    def native_value(self) -> str:
+        """Return the state of the sensor (truncated to 250 characters)."""
+        return self._state[:250]  # ✅ Truncate to 250 characters
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return only the last 5 lines with 'Day adjustment' in a list format."""
+        lines = []
+        for line in self._state.splitlines():
+            if "Day adjustment" in line:
+                lines.append(line)
+        return {"log_lines": lines[-6:][:3]}  # Last 6 lines, then first 3 of those
+
+    async def async_update(self) -> None:
+        """Méthode pour mettre à jour le capteur en lisant le log de manière asynchrone."""
+        try:
+            log_path = "/config/home-assistant.log"
+            if not os.path.exists(log_path):
+                self._state = f"Log file not found: {log_path}"
+                return
+
+            with await asyncio.to_thread(open, log_path, "r") as f:
+                lines = f.readlines()
+
+            # Filtrer les lignes contenant 'Day adjustment'
+            filtered_lines = [line for line in lines if "Day adjustment" in line]
+            if len(filtered_lines) < 10:
+                self._state = "\n".join(filtered_lines)
+            else:
+                self._state = "\n".join(filtered_lines[-10:])  # Dernières 10 lignes
+
+        except Exception as e:
+            self._state = f"Error reading log: {e}"
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -231,8 +277,8 @@ async def async_setup_entry(
         entry.entry_id
     ]
     entities = []
-    
-    # Ajouter tous les capteurs standard
+
+    #Ajouter les capteurs standards
     for entity_description in SENSORS:
         entities.append(
             OpenMeteoSolarForecastSensorEntity(
@@ -241,8 +287,27 @@ async def async_setup_entry(
                 entity_description=entity_description,
             )
         )
-        
+
+   # Ajouter le capteur personnalisé pour les logs
+    log_sensor = LogSensorEntity(hass, entry_id=entry.entry_id)
+    entities.append(log_sensor)
+
+    # Planifier la mise à jour du capteur de log toutes les 5 minutes
+    async def schedule_log_update(now: datetime) -> None:
+        """Mettre à jour le capteur de log."""
+        await log_sensor.async_update()
+
+    async_track_utc_time_change(
+        hass,
+        schedule_log_update,
+        minute=[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+        second=0,
+    )
+
     async_add_entities(entities)
+
+
+
 
 class OpenMeteoSolarForecastSensorEntity(
     CoordinatorEntity[OpenMeteoSolarForecastDataUpdateCoordinator], SensorEntity
