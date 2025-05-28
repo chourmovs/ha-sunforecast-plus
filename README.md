@@ -130,6 +130,6 @@ The [forecast_solar component code](https://github.com/home-assistant/core/tree/
 
 ## ☕ Support this project
 
-If you find this integration useful and want to support its development, consider [buying me a coffee](https://www.buymeacoffee.com/chourmovs):
+If you find this integration useful and want to support its development, consider
 
-[Buy Me a Coffee](https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=chourmovs&button_colour=5F7FFF&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00)
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/chourmovs)
