@@ -288,7 +288,7 @@ class OpenMeteoSolarForecast:
         cloud_cover_dict = {}
         if cloud_timestamps:
             for i, timestamp_str in enumerate(cloud_timestamps):
-                if i < len(cloud_cover_data):
+                if i < len(cloud_cover_data) and cloud_cover_data[i] is not None: 
                     try:
                         # Supprimer le 'T' et ajouter les secondes si nécessaire
                         dt_str = timestamp_str.replace('T', ' ')
@@ -416,13 +416,16 @@ class OpenMeteoSolarForecast:
                         cloud_dt = datetime.fromisoformat(dt_str)
                         date_str = cloud_dt.date().isoformat()
                         
+                        value = cloud_cover_data[i]
+                        if value is None:
+                            continue
                         if date_str not in date_cloud_cover:
                             date_cloud_cover[date_str] = {
-                                "total": cloud_cover_data[i],
+                                "total": value,
                                 "count": 1
                             }
                         else:
-                            date_cloud_cover[date_str]["total"] += cloud_cover_data[i]
+                            date_cloud_cover[date_str]["total"] += value
                             date_cloud_cover[date_str]["count"] += 1
                     except ValueError:
                         pass
@@ -430,7 +433,7 @@ class OpenMeteoSolarForecast:
         else:
             # Diviser les données de cloud_cover_data en tranches de 24h
             for i in range(0, len(cloud_cover_data), 24):
-                day_slice = cloud_cover_data[i:i+24]
+                day_slice = [v for v in cloud_cover_data[i:i+24] if v is not None]
                 if day_slice:
                     day_idx = i // 24
                     today = estimate.now().date()
