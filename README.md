@@ -1,4 +1,4 @@
-we# HA SunForecast Plus Integration
+HA SunForecast Plus Integration
 
 SunForecast Plus is a custom Home Assistant integration designed to provide more accurate solar production forecasts using weather data from [Open-Meteo](https://open-meteo.com/).
 
